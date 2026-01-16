@@ -607,6 +607,9 @@ export default function App() {
   const [seedSuccess, setSeedSuccess] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [showInsights, setShowInsights] = useState(false);
+  const [duplicationCount, setDuplicationCount] = useState<Record<string, number>>({});
+  const [showTemplateSuggestion, setShowTemplateSuggestion] = useState(false);
+  const [templateSuggestionData, setTemplateSuggestionData] = useState<{name: string, category: string, type: string} | null>(null);
 
   const insightsBadgeCount = useMemo(() => {
     return getInsightCount({ transactions, invoices, taxPayments, settings });
@@ -1244,6 +1247,28 @@ export default function App() {
     setDrawerMode('add'); // Open in add mode
     setIsDrawerOpen(true);
     showToast("Transaction duplicated - review and save", "success");
+    
+    // Track duplication for smart suggestions
+    const trackingKey = `${original.name}_${original.category}_${original.type}`;
+    const currentCount = duplicationCount[trackingKey] || 0;
+    const newCount = currentCount + 1;
+    
+    setDuplicationCount(prev => ({
+      ...prev,
+      [trackingKey]: newCount
+    }));
+    
+    // After 3 duplications, suggest saving as template
+    if (newCount === 3) {
+      setTimeout(() => {
+        setTemplateSuggestionData({
+          name: original.name,
+          category: original.category,
+          type: original.type
+        });
+        setShowTemplateSuggestion(true);
+      }, 1000);
+    }
   };
 
   const saveInvoice = (data: Partial<Invoice>) => {
@@ -2124,9 +2149,10 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                       </div>
                       <div className="text-right ml-4 flex-shrink-0 w-[130px]">
                           <div className={`text-xl font-bold whitespace-nowrap ${amountColor}`}>{isIncome ? '+' : ''}{formatCurrency.format(item.amount)}</div>
-                          <div className="flex justify-end gap-4 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                               <button onClick={(e) => { e.stopPropagation(); handleEditItem(item); }} className="text-slate-400 dark:text-slate-300 hover:text-blue-600"><Edit3 size={18}/></button>
-                               <button onClick={(e) => { e.stopPropagation(); if (isInvoice) deleteInvoice(item); else deleteTransaction(item.id); }} className="text-slate-400 dark:text-slate-300 hover:text-red-600"><Trash2 size={18}/></button>
+                          <div className="flex justify-end gap-3 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                               <button onClick={(e) => { e.stopPropagation(); if (isInvoice) duplicateInvoice(item as Invoice); else duplicateTransaction(item as Transaction); }} className="text-slate-400 dark:text-slate-300 hover:text-blue-600 transition-colors" title="Duplicate"><Copy size={18}/></button>
+                               <button onClick={(e) => { e.stopPropagation(); handleEditItem(item); }} className="text-slate-400 dark:text-slate-300 hover:text-slate-600 transition-colors" title="Edit"><Edit3 size={18}/></button>
+                               <button onClick={(e) => { e.stopPropagation(); if (isInvoice) deleteInvoice(item); else deleteTransaction(item.id); }} className="text-slate-400 dark:text-slate-300 hover:text-red-600 transition-colors" title="Delete"><Trash2 size={18}/></button>
                           </div>
                       </div>
                    </div>
@@ -3436,6 +3462,52 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
              </div>
          )}
       </Drawer>
+      
+      {/* Template Suggestion Modal */}
+      {showTemplateSuggestion && templateSuggestionData && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-xl p-6 shadow-2xl border border-blue-500/20">
+            <div className="flex items-center gap-4 mb-4 text-blue-600 dark:text-blue-400">
+              <div className="bg-blue-100 dark:bg-blue-500/10 p-3 rounded-full">
+                <Sparkles size={24} strokeWidth={2} />
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold">Save as Template?</h3>
+            </div>
+            
+            <p className="text-slate-600 dark:text-slate-300 mb-4 font-medium leading-relaxed">
+              You've duplicated <span className="font-bold text-slate-900 dark:text-white">"{templateSuggestionData.name}"</span> multiple times.
+            </p>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-900 dark:text-blue-100">
+                  <p className="font-semibold mb-1">Pro tip for future:</p>
+                  <p>For truly recurring transactions, you can add them to your custom categories. This makes them quick to access anytime!</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowTemplateSuggestion(false)} 
+                className="flex-1 py-3 font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                Not Now
+              </button>
+              <button 
+                onClick={() => {
+                  setShowTemplateSuggestion(false);
+                  showToast("Tip noted! Keep using duplicate for quick entries", "success");
+                }} 
+                className="flex-1 py-3 font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-500/20 transition-colors"
+              >
+                Got It!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );
