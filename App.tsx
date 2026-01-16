@@ -73,7 +73,8 @@ import {
   Camera,
   Eye,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Copy
 } from 'lucide-react';
 import { Page, Transaction, Invoice, UserSettings, Notification, FilterPeriod, RecurrenceFrequency, FilingStatus, TaxPayment, TaxEstimationMethod, InvoiceItem, CustomCategories, Receipt as ReceiptType } from './types';
 import { CATS_IN, CATS_OUT, CATS_BILLING, DEFAULT_PAY_PREFS, DB_KEY, TAX_CONSTANTS, TAX_PLANNER_2026, getFreshDemoData } from './constants';
@@ -1229,6 +1230,22 @@ export default function App() {
     setIsDrawerOpen(false);
   };
 
+  const duplicateTransaction = (original: Transaction) => {
+    const duplicated = {
+      ...original,
+      id: undefined, // Will be generated on save
+      date: new Date().toISOString().split('T')[0], // Set to today
+      receiptImage: undefined, // Don't copy receipt
+      notes: original.notes || '' // Keep notes but don't add "duplicated" marker
+    };
+    
+    setActiveItem(duplicated);
+    setActiveTab(original.type); // Set correct tab (income/expense)
+    setDrawerMode('add'); // Open in add mode
+    setIsDrawerOpen(true);
+    showToast("Transaction duplicated - review and save", "success");
+  };
+
   const saveInvoice = (data: Partial<Invoice>) => {
     if (!data.client?.trim()) return showToast("Please enter a client name", "error");
     let totalAmount = 0, subtotal = 0;
@@ -1264,6 +1281,31 @@ export default function App() {
       setInvoices(prev => [newInv, ...prev]); showToast("Invoice generated", "success");
     }
     setIsDrawerOpen(false);
+  };
+
+  const duplicateInvoice = (original: Invoice) => {
+    const today = new Date().toISOString().split('T')[0];
+    const paymentTermsDays = original.due && original.date ? 
+      Math.round((new Date(original.due).getTime() - new Date(original.date).getTime()) / (1000 * 60 * 60 * 24)) : 30;
+    
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + paymentTermsDays);
+    
+    const duplicated = {
+      ...original,
+      id: undefined, // Will be generated on save
+      date: today,
+      due: dueDate.toISOString().split('T')[0],
+      status: 'unpaid' as const, // Always unpaid
+      linkedTransactionId: undefined, // Don't link to old payment
+      // Keep all the important stuff: client info, items, rates, terms, notes
+    };
+    
+    setActiveItem(duplicated);
+    setActiveTab('billing');
+    setDrawerMode('add');
+    setIsDrawerOpen(true);
+    showToast("Invoice duplicated - review and save", "success");
   };
 
   const saveNewCategory = () => {
@@ -3327,11 +3369,14 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                 )}
 
                 {drawerMode === 'edit_inv' && activeItem.id && (
-                    <div className="bg-slate-100 dark:bg-slate-800/50 p-2 rounded-lg flex items-center justify-between mb-4 border border-slate-200 dark:border-slate-700">
-                        <div className="flex gap-2 w-full">
-                            <button type="button" onClick={handleDirectExportPDF} disabled={isGeneratingPdf} className={`flex-1 py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all ${isGeneratingPdf ? 'opacity-70 cursor-wait' : ''}`}>{isGeneratingPdf ? <Loader2 size={18} className="animate-spin text-blue-600" /> : <Download size={18} />}<span className="text-[10px] font-bold uppercase tracking-wider">{isGeneratingPdf ? 'Generating...' : 'Export PDF'}</span></button>
-                            <button type="button" onClick={() => toggleInvoicePaidStatus(activeItem)} disabled={activeItem.status === 'void'} className={`flex-1 py-2.5 flex flex-col items-center justify-center gap-1 rounded-md border shadow-sm transition-all ${activeItem.status === 'void' ? 'opacity-50 cursor-not-allowed bg-slate-200 dark:bg-slate-800 text-slate-500' : activeItem.status === 'paid' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400 hover:bg-orange-100' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100'}`}>{activeItem.status === 'paid' ? <X size={18} /> : <CheckCircle size={18} />}<span className="text-[10px] font-bold uppercase tracking-wider">{activeItem.status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}</span></button>
-                            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setInvoiceToDelete(activeItem.id!); }} className="flex-1 py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-all"><Trash2 size={18} /><span className="text-[10px] font-bold uppercase tracking-wider">Delete</span></button>
+                    <div className="bg-slate-100 dark:bg-slate-800/50 p-2 rounded-lg mb-4 border border-slate-200 dark:border-slate-700">
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                            <button type="button" onClick={handleDirectExportPDF} disabled={isGeneratingPdf} className={`py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all ${isGeneratingPdf ? 'opacity-70 cursor-wait' : ''}`}>{isGeneratingPdf ? <Loader2 size={18} className="animate-spin text-blue-600" /> : <Download size={18} />}<span className="text-[10px] font-bold uppercase tracking-wider">{isGeneratingPdf ? 'Generating...' : 'Export PDF'}</span></button>
+                            <button type="button" onClick={() => duplicateInvoice(activeItem as Invoice)} className="py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-sm transition-all"><Copy size={18} /><span className="text-[10px] font-bold uppercase tracking-wider">Duplicate</span></button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => toggleInvoicePaidStatus(activeItem)} disabled={activeItem.status === 'void'} className={`py-2.5 flex flex-col items-center justify-center gap-1 rounded-md border shadow-sm transition-all ${activeItem.status === 'void' ? 'opacity-50 cursor-not-allowed bg-slate-200 dark:bg-slate-800 text-slate-500' : activeItem.status === 'paid' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400 hover:bg-orange-100' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100'}`}>{activeItem.status === 'paid' ? <X size={18} /> : <CheckCircle size={18} />}<span className="text-[10px] font-bold uppercase tracking-wider">{activeItem.status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}</span></button>
+                            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setInvoiceToDelete(activeItem.id!); }} className="py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-all"><Trash2 size={18} /><span className="text-[10px] font-bold uppercase tracking-wider">Delete</span></button>
                         </div>
                     </div>
                 )}
@@ -3368,6 +3413,20 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                    </div>
                 ) : (
                    <div className="space-y-4">
+                      {drawerMode === 'edit_tx' && activeItem.id && (
+                        <div className="bg-slate-100 dark:bg-slate-800/50 p-2 rounded-lg mb-2 border border-slate-200 dark:border-slate-700">
+                          <div className="grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => duplicateTransaction(activeItem as Transaction)} className="py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-sm transition-all">
+                              <Copy size={18} />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">Duplicate</span>
+                            </button>
+                            <button type="button" onClick={() => deleteTransaction(activeItem.id)} className="py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-all">
+                              <Trash2 size={18} />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">Delete</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
                       <div><label className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block pl-1">Description</label><input type="text" value={activeItem.name || ''} onChange={e => setActiveItem(prev => ({ ...prev, name: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-0 rounded-lg px-4 py-4 font-bold text-lg outline-none focus:ring-2 focus:ring-blue-500/20" placeholder={activeTab === 'income' ? "Client or Source" : "Vendor or Purchase"} /></div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><DateInput label="Date" value={activeItem.date || ''} onChange={v => setActiveItem(prev => ({ ...prev, date: v }))} /><div><label className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block pl-1">Amount</label><div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 font-bold">{settings.currencySymbol}</span><input type="number" value={activeItem.amount || ''} onChange={e => setActiveItem(prev => ({ ...prev, amount: Number(e.target.value) }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-0 rounded-lg pl-10 pr-4 py-4 font-bold text-lg outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="0.00" /></div></div></div>
                       <div><label className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block pl-1">Category</label>{renderCategoryChips(activeItem.category, (cat) => setActiveItem(prev => ({ ...prev, category: cat })))}</div>
