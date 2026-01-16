@@ -2183,6 +2183,75 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                 </div>
                 <h2 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white font-brand">Reports</h2>
               </div>
+              
+              {/* Enhanced Profit & Loss Statement */}
+              <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl">
+                {/* Header with Actions */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <BarChart3 size={24} strokeWidth={2} className="text-blue-600 dark:text-blue-400" />
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight font-brand">
+                        Profit & Loss
+                      </h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                        {filterPeriod === 'month' ? referenceDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) :
+                         filterPeriod === 'quarter' ? `Q${Math.floor(referenceDate.getMonth() / 3) + 1} ${referenceDate.getFullYear()}` :
+                         filterPeriod === 'year' ? referenceDate.getFullYear().toString() : 'All Time'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { setPlExportRequested(false); setShowPLPreview(true); }}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm flex items-center gap-2 transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span className="hidden sm:inline">Preview</span>
+                    </button>
+
+                    <button
+                      onClick={handleExportPLPDF}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm flex items-center gap-2 transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="hidden sm:inline">Export PDF</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Compact Summary - Left Aligned */}
+                <div className="space-y-4">
+                  <div className="py-3 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Revenue</span>
+                    </div>
+                    <div className="text-2xl font-bold text-emerald-600 tabular-nums">{formatCurrency.format(reportData.income)}</div>
+                  </div>
+                  
+                  <div className="py-3 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Operating Expenses</span>
+                    </div>
+                    <div className="text-2xl font-bold text-red-600 tabular-nums">{formatCurrency.format(reportData.expense)}</div>
+                  </div>
+                  
+                  <div className="pt-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-base font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Net Profit</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                        {reportData.income > 0 ? `${((reportData.netProfit / reportData.income) * 100).toFixed(1)}% margin` : '—'}
+                      </span>
+                    </div>
+                    <div className={`text-4xl font-bold tabular-nums ${reportData.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {formatCurrency.format(reportData.netProfit)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div ref={taxSnapshotRef} className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white p-8 rounded-lg shadow-xl relative overflow-hidden border border-slate-200 dark:border-slate-800">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-blue-50 dark:bg-blue-600/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
                 <div className="flex items-center justify-between mb-8 relative z-10">
@@ -2684,73 +2753,6 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                         </div>
                     )}
                 </div>
-              {/* Enhanced Profit & Loss Statement */}
-              <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl">
-                {/* Header with Actions */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <BarChart3 size={24} strokeWidth={2} className="text-blue-600 dark:text-blue-400" />
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight font-brand">
-                        Profit & Loss
-                      </h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                        {filterPeriod === 'month' ? referenceDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) :
-                         filterPeriod === 'quarter' ? `Q${Math.floor(referenceDate.getMonth() / 3) + 1} ${referenceDate.getFullYear()}` :
-                         filterPeriod === 'year' ? referenceDate.getFullYear().toString() : 'All Time'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => { setPlExportRequested(false); setShowPLPreview(true); }}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm flex items-center gap-2 transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                      <span className="hidden sm:inline">Preview</span>
-                    </button>
-
-                    <button
-                      onClick={handleExportPLPDF}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm flex items-center gap-2 transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span className="hidden sm:inline">Export PDF</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Compact Summary - Left Aligned */}
-                <div className="space-y-4">
-                  <div className="py-3 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Revenue</span>
-                    </div>
-                    <div className="text-2xl font-bold text-emerald-600 tabular-nums">{formatCurrency.format(reportData.income)}</div>
-                  </div>
-                  
-                  <div className="py-3 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Operating Expenses</span>
-                    </div>
-                    <div className="text-2xl font-bold text-red-600 tabular-nums">{formatCurrency.format(reportData.expense)}</div>
-                  </div>
-                  
-                  <div className="pt-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-base font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Net Profit</span>
-                      <span className="text-sm text-slate-500 dark:text-slate-400">
-                        {reportData.income > 0 ? `${((reportData.netProfit / reportData.income) * 100).toFixed(1)}% margin` : '—'}
-                      </span>
-                    </div>
-                    <div className={`text-4xl font-bold tabular-nums ${reportData.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {formatCurrency.format(reportData.netProfit)}
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* P&L Preview Modal */}
               {showPLPreview && (
