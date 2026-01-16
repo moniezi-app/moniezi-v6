@@ -47,24 +47,23 @@
         padding: 24px;
       }
 
-      /* Bigger loader logo (fix for iPhone looking smaller) */
       #app-loader .mark {
-        width: 92px;
-        height: 92px;
-        border-radius: 26px;
+        width: 76px;
+        height: 76px;
+        border-radius: 22px;
         background: linear-gradient(135deg, #3b82f6, #6366f1);
         display: grid;
         place-items: center;
         box-shadow: 0 18px 50px rgba(0,0,0,.35);
       }
 
-      /* Use a larger rendered size; keep crisp asset */
-      #app-loader .mark img {
-        width: 72px;
-        height: 72px;
-        object-fit: contain;
-        display: block;
-      }
+   #app-loader .mark img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  display: block;
+}
+
 
       #app-loader .brand {
         font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -91,6 +90,7 @@
         margin-top: 6px;
       }
     </style>
+
 
     <!-- Favicons -->
     <link rel="icon" href="favicon.ico" />
@@ -243,10 +243,9 @@
       <!-- Instant loader (visible on iOS while JS/CSS loads). React replaces this automatically. -->
       <div id="app-loader" aria-label="Loading Moniezi Pro">
         <div class="wrap">
-          <div class="mark" aria-hidden="true">
-            <!-- Use higher-res icon so it looks crisp everywhere -->
-            <img src="icons/icon-512.png" alt="Moniezi" />
-          </div>
+         <div class="mark" aria-hidden="true">
+  <img src="icons/icon-192.png" alt="Moniezi" />
+</div>
 
           <div class="brand">MONIEZI</div>
           <div class="sub">PRO FINANCE</div>
