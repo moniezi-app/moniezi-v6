@@ -1094,6 +1094,14 @@ export default function App() {
     return filteredInvoices.filter(i => i.status === 'unpaid' && getDaysOverdue(i.due) > 0);
   }, [filteredInvoices, invoiceQuickFilter]);
 
+  const invoiceQuickCounts = useMemo(() => {
+    const validInvoices = filteredInvoices.filter(i => i.status !== 'void');
+    const all = validInvoices.length;
+    const unpaid = validInvoices.filter(i => i.status === 'unpaid').length;
+    const overdue = validInvoices.filter(i => i.status === 'unpaid' && getDaysOverdue(i.due) > 0).length;
+    return { all, unpaid, overdue };
+  }, [filteredInvoices]);
+
  const invoicePeriodTotals = useMemo(() => {
    const validInvoices = filteredInvoices.filter(i => i.status !== 'void');
    const total = validInvoices.reduce((sum, i) => sum + i.amount, 0);
