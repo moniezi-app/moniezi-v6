@@ -117,14 +117,6 @@ export interface Notification {
 
 export type FilterPeriod = 'all' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
-export interface ProfitLossReport {
-  id: string;
-  name: string; // User-friendly title
-  period: FilterPeriod;
-  referenceDate: string; // ISO date string (YYYY-MM-DD)
-  createdAt: string; // ISO timestamp
-  updatedAt?: string; // ISO timestamp
-}
 export enum Page {
   Dashboard = 'dashboard',
   AllTransactions = 'all_transactions',

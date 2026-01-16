@@ -127,7 +127,7 @@ const downloadReceiptToDevice = (dataUrl: string) => {
         const dateStr = now.toISOString().split('T')[0];
         
         // Attempt to place in BizReceipts folder (Browser support varies, might fallback to filename prefix)
-        link.download = `BizReceipts/Receipt_${dateStr}_${timestamp}.jpg`; 
+        link.download = `Receipt_${dateStr}_${timestamp}.jpg`; 
         
         document.body.appendChild(link);
         link.click();
@@ -453,6 +453,28 @@ const PeriodSelector: React.FC<{
 export default function App() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>(Page.Dashboard);
+  const [invoiceQuickFilter, setInvoiceQuickFilter] = useState<'all' | 'unpaid' | 'overdue'>('all');
+
+  const HOME_KPI_PERIOD_KEY = 'moniezi_home_kpi_period';
+  type HomeKpiPeriod = 'ytd' | 'mtd' | '30d' | 'all';
+  const [homeKpiPeriod, setHomeKpiPeriod] = useState<HomeKpiPeriod>(() => {
+    try {
+      const v = localStorage.getItem(HOME_KPI_PERIOD_KEY);
+      if (v === 'ytd' || v === 'mtd' || v === '30d' || v === 'all') return v;
+    } catch {
+      // ignore
+    }
+    return 'ytd';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(HOME_KPI_PERIOD_KEY, homeKpiPeriod);
+    } catch {
+      // ignore
+    }
+  }, [homeKpiPeriod]);
+
 
   // The app scrolls inside an internal container (<main className="overflow-y-auto">),
   // not the browser window. Without resetting this container, switching pages via the
@@ -823,8 +845,52 @@ export default function App() {
     const pendingAmount = allUnpaid.reduce((sum, i) => sum + i.amount, 0);
     const totalTaxRate = (settings.taxRate / 100) + (settings.stateTaxRate / 100) + TAX_CONSTANTS.SE_TAX_RATE;
     const estimatedTax = profit > 0 ? profit * totalTaxRate : 0;
-    return { income, expense, profit, pendingAmount, overdueAmount, estimatedTax };
+    const pendingCount = allUnpaid.length;
+    const overdueCount = allUnpaid.filter(i => getDaysOverdue(i.due) > 0).length;
+    return { income, expense, profit, pendingAmount, overdueAmount, pendingCount, overdueCount, estimatedTax };
   }, [transactions, invoices, settings.taxRate, settings.stateTaxRate]);
+
+  const homeTotals = useMemo(() => {
+    const parse = (dateStr: string) => {
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    const now = new Date();
+    const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    const rangeFor = (p: HomeKpiPeriod): { start: Date | null; end: Date } => {
+      if (p === 'all') return { start: null, end: endDate };
+      if (p === 'ytd') return { start: new Date(now.getFullYear(), 0, 1), end: endDate };
+      if (p === 'mtd') return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: endDate };
+      // '30d'
+      const start = new Date(endDate);
+      start.setDate(start.getDate() - 29);
+      start.setHours(0, 0, 0, 0);
+      return { start, end: endDate };
+    };
+
+    const { start, end } = rangeFor(homeKpiPeriod);
+    const inRange = (t: Transaction) => {
+      const d = parse(t.date);
+      if (!d) return false;
+      if (start && d < start) return false;
+      return d <= end;
+    };
+
+    const scoped = transactions.filter(inRange);
+    const income = scoped.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const expense = scoped.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const profit = income - expense;
+
+    const label = homeKpiPeriod === 'ytd' ? 'YTD' : homeKpiPeriod === 'mtd' ? 'MTD' : homeKpiPeriod === '30d' ? '30D' : 'ALL';
+
+    const fmtShort = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    const rangeText = start ? `${fmtShort(start)} — ${fmtShort(end)}` : `All Time`;
+
+    return { income, expense, profit, label, rangeText };
+  }, [transactions, homeKpiPeriod]);
+
 
   const reportData = useMemo(() => {
     const now = new Date();
@@ -966,6 +1032,12 @@ export default function App() {
  }, [invoices, filterPeriod, referenceDate]);
 
  const filteredInvoices = useMemo(() => getFilteredInvoices(), [getFilteredInvoices]);
+
+  const displayedInvoices = useMemo(() => {
+    if (invoiceQuickFilter === 'all') return filteredInvoices;
+    if (invoiceQuickFilter === 'unpaid') return filteredInvoices.filter(i => i.status === 'unpaid');
+    return filteredInvoices.filter(i => i.status === 'unpaid' && getDaysOverdue(i.due) > 0);
+  }, [filteredInvoices, invoiceQuickFilter]);
 
  const invoicePeriodTotals = useMemo(() => {
    const validInvoices = filteredInvoices.filter(i => i.status !== 'void');
@@ -1547,7 +1619,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                         <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center"><Calendar size={18} /></div>
                         <div>
                             <div className="font-bold text-lg">Receipt View</div>
-                            <div className="text-xs text-slate-400 flex items-center gap-2">{viewingReceipt.date} <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">Saved to Downloads/BizReceipts</span></div>
+                            <div className="text-xs text-slate-400 flex items-center gap-2">{viewingReceipt.date} <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">Exports to Downloads</span></div>
                         </div>
                     </div>
                     <div className="flex gap-2">
@@ -1735,70 +1807,94 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-white dark:bg-gradient-to-br dark:from-blue-800 dark:to-indigo-950 p-8 rounded-xl shadow-xl dark:shadow-none border border-slate-200 dark:border-white/10 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-80 h-80 bg-slate-100/50 dark:bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-slate-200/50 transition-colors duration-700 pointer-events-none" />
-              <label className="text-xs font-bold text-slate-500 dark:text-blue-200 mb-1 block tracking-widest uppercase font-brand">Net Profit</label>
-              <div className="text-4xl font-extrabold tracking-tighter mb-8 text-slate-950 dark:text-white font-brand">{formatCurrency.format(totals.profit)}</div>
+
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <div className="min-w-0">
+                  <label className="text-xs font-bold text-slate-500 dark:text-blue-200 mb-1 block tracking-widest uppercase font-brand">
+                    Net Profit <span className="opacity-80">({homeTotals.label})</span>
+                  </label>
+                  <div className="text-[11px] font-bold text-slate-500 dark:text-blue-200/80 tracking-wide">{homeTotals.rangeText}</div>
+                </div>
+
+                <div className="flex bg-slate-100/70 dark:bg-white/10 p-1 rounded-xl border border-slate-200/70 dark:border-white/10 shadow-sm">
+                  {(['ytd', 'mtd', '30d', 'all'] as HomeKpiPeriod[]).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setHomeKpiPeriod(p)}
+                      className={`px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider rounded-lg transition-all ${homeKpiPeriod === p ? 'bg-white dark:bg-slate-950/70 text-blue-600 dark:text-white shadow' : 'text-slate-500 dark:text-blue-100/80 hover:text-slate-900 dark:hover:text-white'}`}
+                    >
+                      {p === 'ytd' ? 'YTD' : p === 'mtd' ? 'MTD' : p === '30d' ? '30D' : 'ALL'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-4xl font-extrabold tracking-tighter mb-8 text-slate-950 dark:text-white font-brand">{formatCurrency.format(homeTotals.profit)}</div>
+
               <div className="flex items-center justify-center gap-4">
                 <div className="bg-slate-50 dark:bg-white/10 backdrop-blur-md px-5 py-3.5 rounded-lg border border-slate-200 dark:border-white/5 min-w-[160px]">
-                   <div className="flex items-center justify-center gap-2 mb-1 text-emerald-600 dark:text-emerald-300"><TrendingUp size={16} strokeWidth={2.5} /><span className="text-xs font-bold uppercase tracking-wide">In</span></div>
-                   <div className="text-xl font-bold text-slate-900 dark:text-white text-center">{formatCurrency.format(totals.income)}</div>
+                  <div className="flex items-center justify-center gap-2 mb-1 text-emerald-600 dark:text-emerald-300"><TrendingUp size={16} strokeWidth={2.5} /><span className="text-xs font-bold uppercase tracking-wide">In</span></div>
+                  <div className="text-xl font-bold text-slate-900 dark:text-white text-center">{formatCurrency.format(homeTotals.income)}</div>
                 </div>
                 <div className="bg-slate-50 dark:bg-white/10 backdrop-blur-md px-5 py-3.5 rounded-lg border border-slate-200 dark:border-white/5 min-w-[160px]">
-                   <div className="flex items-center justify-center gap-2 mb-1 text-red-600 dark:text-red-300"><TrendingDown size={16} strokeWidth={2.5} /><span className="text-xs font-bold uppercase tracking-wide">Out</span></div>
-                   <div className="text-xl font-bold text-slate-900 dark:text-white text-center">{formatCurrency.format(totals.expense)}</div>
+                  <div className="flex items-center justify-center gap-2 mb-1 text-red-600 dark:text-red-300"><TrendingDown size={16} strokeWidth={2.5} /><span className="text-xs font-bold uppercase tracking-wide">Out</span></div>
+                  <div className="text-xl font-bold text-slate-900 dark:text-white text-center">{formatCurrency.format(homeTotals.expense)}</div>
                 </div>
               </div>
             </div>
 
-            <div onClick={() => { setScrollToTaxSnapshot(true); setCurrentPage(Page.Reports); }} className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-800 cursor-pointer active:scale-95 transition-all hover:shadow-lg hover:border-emerald-500/30 group">
-               <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3 text-emerald-600 dark:text-emerald-400"><Calculator size={20} /><span className="text-xs font-bold uppercase tracking-widest font-brand">Tax Snapshot</span></div>
-                  <ArrowRight size={18} className="text-slate-300 dark:text-slate-400 -rotate-45 group-hover:rotate-0 group-hover:text-emerald-500 transition-all duration-300"/>
-               </div>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
-                  <div><div className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wider font-bold mb-1">Estimated Tax (YTD)</div><div className="text-2xl font-extrabold font-brand text-slate-900 dark:text-white">{formatCurrency.format(reportData.totalEstimatedTax)}</div></div>
-                  <div><div className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wider font-bold mb-1">YTD Net Profit</div><div className="text-2xl font-bold text-slate-600 dark:text-slate-200">{formatCurrency.format(reportData.ytdNetProfit)}</div></div>
-               </div>
-               <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-                  <div className="text-xs font-bold text-slate-600 dark:text-slate-300">Next Deadline: <span className="text-emerald-600 dark:text-emerald-400">{getNextEstimatedTaxDeadline().date}</span> — {getNextEstimatedTaxDeadline().days} days left</div>
-                  <div onClick={(e) => { e.stopPropagation(); setCurrentPage(Page.Reports); setTimeout(() => { setScrollToTaxSnapshot(true); handleOpenTaxDrawer(); }, 100); }} className="text-xs font-bold text-blue-500 hover:underline uppercase tracking-wider cursor-pointer">Log Payment</div>
-               </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-800">
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {/* Profit Margin */}
-                  <div className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/30 p-4 rounded-lg transition-colors" onClick={() => setCurrentPage(Page.Reports)}>
-                     <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center mb-3">
-                        <TrendingUp size={24} strokeWidth={1.5} className="text-slate-700 dark:text-slate-300" />
-                     </div>
-                     <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-                        {totals.income > 0 ? `${((totals.profit / totals.income) * 100).toFixed(1)}%` : "—"}
-                     </div>
-                     <div className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-1">Profit Margin</div>
-                     <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-100 dark:bg-slate-900 px-3 py-1 rounded-full">YTD</div>
+            <div
+                className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-lg rounded-3xl p-6 relative overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                onClick={() => {
+                  const mode = totals.overdueCount > 0 ? 'overdue' : totals.pendingCount > 0 ? 'unpaid' : 'all';
+                  setInvoiceQuickFilter(mode);
+                  setCurrentPage(Page.Invoices);
+                }}
+              >
+                <div className="text-center">
+                  <div
+                    className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                      totals.overdueCount > 0
+                        ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-300'
+                        : totals.pendingCount > 0
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                    }`}
+                  >
+                    {totals.overdueCount > 0 ? <AlertTriangle size={24} /> : totals.pendingCount > 0 ? <Clock3 size={24} /> : <CheckCircle size={24} />}
                   </div>
 
-                  {/* Actions Needed / Pending */}
-                  <div className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/30 p-4 rounded-lg transition-colors border-l border-slate-200 dark:border-slate-800" onClick={() => setCurrentPage(Page.Invoices)}>
-                     <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${totals.overdueAmount > 0 ? 'bg-red-100 dark:bg-red-950/40' : 'bg-slate-100 dark:bg-slate-900'}`}>
-                        {totals.overdueAmount > 0 ? (
-                           <AlertCircle size={24} strokeWidth={1.5} className="text-red-500" />
-                        ) : (
-                           <FileText size={24} strokeWidth={1.5} className="text-slate-700 dark:text-slate-300" />
-                        )}
-                     </div>
-                     <div className={`text-2xl font-bold mb-1 ${totals.overdueAmount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>
-                        {formatCurrency.format(totals.pendingAmount)}
-                     </div>
-                     <div className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-1">
-                        {totals.overdueAmount > 0 ? "Actions Needed" : "Pending"}
-                     </div>
-                     <div className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${totals.overdueAmount > 0 ? 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400'}`}>
-                        {totals.overdueAmount > 0 ? "Has Overdue" : "Unpaid"}
-                     </div>
+                  <div
+                    className={`text-4xl font-extrabold tracking-tight mb-2 ${
+                      totals.overdueCount > 0
+                        ? 'text-red-600 dark:text-red-300'
+                        : totals.pendingCount > 0
+                        ? 'text-amber-700 dark:text-amber-300'
+                        : 'text-emerald-700 dark:text-emerald-300'
+                    }`}
+                  >
+                    {formatCurrency.format(totals.overdueCount > 0 ? totals.overdueAmount : totals.pendingAmount)}
                   </div>
-               </div>
-            </div>
+
+                  <div className="text-sm font-extrabold text-slate-900 dark:text-white">
+                    {totals.overdueCount > 0 ? 'Overdue Invoices' : totals.pendingCount > 0 ? 'Unpaid Invoices' : 'All invoices paid'}
+                  </div>
+
+                  <div
+                    className={`inline-flex mt-3 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                      totals.overdueCount > 0
+                        ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300'
+                        : totals.pendingCount > 0
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                    }`}
+                  >
+                    {totals.overdueCount > 0 ? `${totals.overdueCount} overdue` : totals.pendingCount > 0 ? `${totals.pendingCount} unpaid` : 'Great job'}
+                  </div>
+
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-3">Tap to open invoices</div>
+                </div>
+              </div>
             
             <div>
               <div className="flex items-center justify-between mb-4 pl-2">
@@ -1826,6 +1922,21 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               </div>
             </div>
 
+            <div onClick={() => { setScrollToTaxSnapshot(true); setCurrentPage(Page.Reports); }} className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-800 cursor-pointer active:scale-95 transition-all hover:shadow-lg hover:border-emerald-500/30 group">
+               <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3 text-emerald-600 dark:text-emerald-400"><Calculator size={20} /><span className="text-xs font-bold uppercase tracking-widest font-brand">Tax Snapshot</span></div>
+                  <ArrowRight size={18} className="text-slate-300 dark:text-slate-400 -rotate-45 group-hover:rotate-0 group-hover:text-emerald-500 transition-all duration-300"/>
+               </div>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                  <div><div className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wider font-bold mb-1">Estimated Tax (YTD)</div><div className="text-2xl font-extrabold font-brand text-slate-900 dark:text-white">{formatCurrency.format(reportData.totalEstimatedTax)}</div></div>
+                  <div><div className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wider font-bold mb-1">YTD Net Profit</div><div className="text-2xl font-bold text-slate-600 dark:text-slate-200">{formatCurrency.format(reportData.ytdNetProfit)}</div></div>
+               </div>
+               <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <div className="text-xs font-bold text-slate-600 dark:text-slate-300">Next Deadline: <span className="text-emerald-600 dark:text-emerald-400">{getNextEstimatedTaxDeadline().date}</span> — {getNextEstimatedTaxDeadline().days} days left</div>
+                  <div onClick={(e) => { e.stopPropagation(); setCurrentPage(Page.Reports); setTimeout(() => { setScrollToTaxSnapshot(true); handleOpenTaxDrawer(); }, 100); }} className="text-xs font-bold text-blue-500 hover:underline uppercase tracking-wider cursor-pointer">Log Payment</div>
+               </div>
+            </div>
+
             {/* Scan Receipt Section */}
             <div>
               <div className="flex items-center justify-between mb-4 pl-2">
@@ -1849,7 +1960,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                    </div>
                 ))}
               </div>
-              <div className="text-[10px] text-slate-400 font-medium text-center mt-2 uppercase tracking-wide">Saved to Downloads/BizReceipts</div>
+              <div className="text-[10px] text-slate-400 font-medium text-center mt-2 uppercase tracking-wide">Exports to Downloads</div>
             </div>
           </div>
         )}
@@ -1869,6 +1980,30 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
              </div>
 
              <PeriodSelector period={filterPeriod} setPeriod={setFilterPeriod} refDate={referenceDate} setRefDate={setReferenceDate} />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setInvoiceQuickFilter('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${invoiceQuickFilter === 'all' ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800'}`}
+              >
+                All ({invoiceQuickCounts.all})
+              </button>
+              <button
+                type="button"
+                onClick={() => setInvoiceQuickFilter('unpaid')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${invoiceQuickFilter === 'unpaid' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800'}`}
+              >
+                Unpaid ({invoiceQuickCounts.unpaid})
+              </button>
+              <button
+                type="button"
+                onClick={() => setInvoiceQuickFilter('overdue')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${invoiceQuickFilter === 'overdue' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800'}`}
+              >
+                Overdue ({invoiceQuickCounts.overdue})
+              </button>
+            </div>
+
 
              {currentPage === Page.AllTransactions && (
                <div className="flex bg-slate-200 dark:bg-slate-900 p-1 rounded-lg mb-4">
@@ -1930,6 +2065,30 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               <button onClick={() => handleOpenFAB('billing')} className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-500 transition-all"><Plus size={24} strokeWidth={2.5} /></button>
             </div>
             <PeriodSelector period={filterPeriod} setPeriod={setFilterPeriod} refDate={referenceDate} setRefDate={setReferenceDate} />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setInvoiceQuickFilter('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${invoiceQuickFilter === 'all' ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800'}`}
+              >
+                All ({invoiceQuickCounts.all})
+              </button>
+              <button
+                type="button"
+                onClick={() => setInvoiceQuickFilter('unpaid')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${invoiceQuickFilter === 'unpaid' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800'}`}
+              >
+                Unpaid ({invoiceQuickCounts.unpaid})
+              </button>
+              <button
+                type="button"
+                onClick={() => setInvoiceQuickFilter('overdue')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${invoiceQuickFilter === 'overdue' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800'}`}
+              >
+                Overdue ({invoiceQuickCounts.overdue})
+              </button>
+            </div>
+
              {filterPeriod !== 'all' && (
                 <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 mb-6 flex items-center justify-between shadow-sm gap-4">
                    <div className="text-center flex-1 border-r border-slate-200 dark:border-slate-800"><div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Paid</div><div className="text-lg font-bold text-slate-900 dark:text-white">{formatCurrency.format(invoicePeriodTotals.paid)}</div></div>
@@ -1938,8 +2097,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                 </div>
              )}
             <div className="space-y-4">
-              {filteredInvoices.length === 0 ? <EmptyState icon={<FileText size={32} />} title="No Invoices Found" subtitle={filterPeriod === 'all' ? "Create professional invoices and track payments effortlessly." : "No invoices found for the selected period."} action={() => handleOpenFAB('billing')} actionLabel="Create Invoice" /> :
-                filteredInvoices.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(inv => {
+              {displayedInvoices.length === 0 ? <EmptyState icon={<FileText size={32} />} title="No Invoices Found" subtitle={filterPeriod === 'all' ? "Create professional invoices and track payments effortlessly." : "No invoices found for the selected period."} action={() => handleOpenFAB('billing')} actionLabel="Create Invoice" /> :
+                displayedInvoices.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(inv => {
                   const overdueDays = inv.status === 'unpaid' ? getDaysOverdue(inv.due) : 0;
                   const isOverdue = overdueDays > 0;
                   const isRecurring = inv.recurrence && inv.recurrence.active;
