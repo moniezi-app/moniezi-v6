@@ -610,6 +610,15 @@ export default function App() {
   const [duplicationCount, setDuplicationCount] = useState<Record<string, number>>({});
   const [showTemplateSuggestion, setShowTemplateSuggestion] = useState(false);
   const [templateSuggestionData, setTemplateSuggestionData] = useState<{name: string, category: string, type: string} | null>(null);
+  
+  // Phase 3: Advanced Duplicate Features
+  const [showBatchDuplicateModal, setShowBatchDuplicateModal] = useState(false);
+  const [batchDuplicateData, setBatchDuplicateData] = useState<Transaction | Invoice | null>(null);
+  const [showRecurringModal, setShowRecurringModal] = useState(false);
+  const [recurringData, setRecurringData] = useState<Transaction | Invoice | null>(null);
+  const [savedTemplates, setSavedTemplates] = useState<Array<{id: string, name: string, data: Partial<Transaction | Invoice>, type: string}>>([]);
+  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
+  const [duplicationHistory, setDuplicationHistory] = useState<Record<string, {originalId: string, originalDate: string}>>({});
 
   const insightsBadgeCount = useMemo(() => {
     return getInsightCount({ transactions, invoices, taxPayments, settings });
@@ -1331,6 +1340,121 @@ export default function App() {
     setDrawerMode('add');
     setIsDrawerOpen(true);
     showToast("Invoice duplicated - review and save", "success");
+  };
+  
+  // Phase 3: Batch Duplicate Function
+  const openBatchDuplicate = (original: Transaction | Invoice) => {
+    setBatchDuplicateData(original);
+    setShowBatchDuplicateModal(true);
+  };
+  
+  const executeBatchDuplicate = (dates: string[]) => {
+    if (!batchDuplicateData) return;
+    
+    const isInvoice = 'client' in batchDuplicateData;
+    
+    dates.forEach(date => {
+      if (isInvoice) {
+        const original = batchDuplicateData as Invoice;
+        const paymentTermsDays = original.due && original.date ? 
+          Math.round((new Date(original.due).getTime() - new Date(original.date).getTime()) / (1000 * 60 * 60 * 24)) : 30;
+        
+        const dueDate = new Date(date);
+        dueDate.setDate(dueDate.getDate() + paymentTermsDays);
+        
+        const newInv: Invoice = {
+          ...original,
+          id: generateId('inv'),
+          date,
+          due: dueDate.toISOString().split('T')[0],
+          status: 'unpaid',
+          linkedTransactionId: undefined
+        };
+        setInvoices(prev => [newInv, ...prev]);
+      } else {
+        const original = batchDuplicateData as Transaction;
+        const newTx: Transaction = {
+          ...original,
+          id: generateId('tx'),
+          date,
+          receiptImage: undefined
+        };
+        setTransactions(prev => [newTx, ...prev]);
+        
+        // Track duplication history
+        setDuplicationHistory(prev => ({
+          ...prev,
+          [newTx.id]: { originalId: original.id!, originalDate: original.date }
+        }));
+      }
+    });
+    
+    showToast(`Created ${dates.length} entries`, "success");
+    setShowBatchDuplicateModal(false);
+    setBatchDuplicateData(null);
+  };
+  
+  // Phase 3: Recurring Transaction Setup
+  const openRecurringSetup = (original: Transaction | Invoice) => {
+    setRecurringData(original);
+    setShowRecurringModal(true);
+  };
+  
+  const setupRecurringTransaction = (frequency: 'weekly' | 'biweekly' | 'monthly' | 'quarterly', occurrences: number) => {
+    if (!recurringData) return;
+    
+    const dates: string[] = [];
+    const startDate = new Date();
+    
+    for (let i = 0; i < occurrences; i++) {
+      const date = new Date(startDate);
+      
+      switch (frequency) {
+        case 'weekly':
+          date.setDate(date.getDate() + (i * 7));
+          break;
+        case 'biweekly':
+          date.setDate(date.getDate() + (i * 14));
+          break;
+        case 'monthly':
+          date.setMonth(date.getMonth() + i);
+          break;
+        case 'quarterly':
+          date.setMonth(date.getMonth() + (i * 3));
+          break;
+      }
+      
+      dates.push(date.toISOString().split('T')[0]);
+    }
+    
+    executeBatchDuplicate(dates);
+    setShowRecurringModal(false);
+    setRecurringData(null);
+  };
+  
+  // Phase 3: Template Management
+  const saveAsTemplate = (data: Partial<Transaction | Invoice>, type: string, name: string) => {
+    const template = {
+      id: generateId('template'),
+      name,
+      data,
+      type
+    };
+    setSavedTemplates(prev => [...prev, template]);
+    showToast("Template saved", "success");
+  };
+  
+  const loadTemplate = (template: typeof savedTemplates[0]) => {
+    setActiveItem(template.data);
+    setActiveTab(template.type as any);
+    setDrawerMode('add');
+    setIsDrawerOpen(true);
+    showToast(`Template "${template.name}" loaded`, "success");
+  };
+  
+  const deleteTemplate = (id: string) => {
+    setSavedTemplates(prev => prev.filter(t => t.id !== id));
+    showToast("Template deleted", "info");
   };
 
   const saveNewCategory = () => {
@@ -3396,9 +3520,10 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
                 {drawerMode === 'edit_inv' && activeItem.id && (
                     <div className="bg-slate-100 dark:bg-slate-800/50 p-2 rounded-lg mb-4 border border-slate-200 dark:border-slate-700">
-                        <div className="grid grid-cols-2 gap-2 mb-2">
+                        <div className="grid grid-cols-3 gap-2 mb-2">
                             <button type="button" onClick={handleDirectExportPDF} disabled={isGeneratingPdf} className={`py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all ${isGeneratingPdf ? 'opacity-70 cursor-wait' : ''}`}>{isGeneratingPdf ? <Loader2 size={18} className="animate-spin text-blue-600" /> : <Download size={18} />}<span className="text-[10px] font-bold uppercase tracking-wider">{isGeneratingPdf ? 'Generating...' : 'Export PDF'}</span></button>
                             <button type="button" onClick={() => duplicateInvoice(activeItem as Invoice)} className="py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-sm transition-all"><Copy size={18} /><span className="text-[10px] font-bold uppercase tracking-wider">Duplicate</span></button>
+                            <button type="button" onClick={() => openBatchDuplicate(activeItem as Invoice)} className="py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 shadow-sm transition-all"><Repeat size={18} /><span className="text-[10px] font-bold uppercase tracking-wider">Batch</span></button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             <button type="button" onClick={() => toggleInvoicePaidStatus(activeItem)} disabled={activeItem.status === 'void'} className={`py-2.5 flex flex-col items-center justify-center gap-1 rounded-md border shadow-sm transition-all ${activeItem.status === 'void' ? 'opacity-50 cursor-not-allowed bg-slate-200 dark:bg-slate-800 text-slate-500' : activeItem.status === 'paid' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400 hover:bg-orange-100' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100'}`}>{activeItem.status === 'paid' ? <X size={18} /> : <CheckCircle size={18} />}<span className="text-[10px] font-bold uppercase tracking-wider">{activeItem.status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}</span></button>
@@ -3441,11 +3566,21 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                    <div className="space-y-4">
                       {drawerMode === 'edit_tx' && activeItem.id && (
                         <div className="bg-slate-100 dark:bg-slate-800/50 p-2 rounded-lg mb-2 border border-slate-200 dark:border-slate-700">
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-3 gap-2 mb-2">
                             <button type="button" onClick={() => duplicateTransaction(activeItem as Transaction)} className="py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-sm transition-all">
                               <Copy size={18} />
                               <span className="text-[10px] font-bold uppercase tracking-wider">Duplicate</span>
                             </button>
+                            <button type="button" onClick={() => openBatchDuplicate(activeItem as Transaction)} className="py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 shadow-sm transition-all">
+                              <Repeat size={18} />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">Batch</span>
+                            </button>
+                            <button type="button" onClick={() => openRecurringSetup(activeItem as Transaction)} className="py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 shadow-sm transition-all">
+                              <Calendar size={18} />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">Recurring</span>
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-2">
                             <button type="button" onClick={() => deleteTransaction(activeItem.id)} className="py-2.5 flex flex-col items-center justify-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-all">
                               <Trash2 size={18} />
                               <span className="text-[10px] font-bold uppercase tracking-wider">Delete</span>
@@ -3483,7 +3618,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                 <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-900 dark:text-blue-100">
                   <p className="font-semibold mb-1">Pro tip for future:</p>
-                  <p>For truly recurring transactions, you can add them to your custom categories. This makes them quick to access anytime!</p>
+                  <p>For truly recurring transactions, try using the <strong>"Batch"</strong> or <strong>"Recurring"</strong> buttons to create multiple entries at once!</p>
                 </div>
               </div>
             </div>
@@ -3498,11 +3633,144 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               <button 
                 onClick={() => {
                   setShowTemplateSuggestion(false);
-                  showToast("Tip noted! Keep using duplicate for quick entries", "success");
+                  showToast("Tip noted! Check out Batch & Recurring buttons", "success");
                 }} 
                 className="flex-1 py-3 font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-500/20 transition-colors"
               >
                 Got It!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Phase 3: Batch Duplicate Modal */}
+      {showBatchDuplicateModal && batchDuplicateData && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl p-6 shadow-2xl border border-purple-500/20">
+            <div className="flex items-center gap-4 mb-4 text-purple-600 dark:text-purple-400">
+              <div className="bg-purple-100 dark:bg-purple-500/10 p-3 rounded-full">
+                <Repeat size={24} strokeWidth={2} />
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold">Batch Duplicate</h3>
+            </div>
+            
+            <p className="text-slate-600 dark:text-slate-300 mb-4 font-medium">
+              Creating multiple copies of: <span className="font-bold text-slate-900 dark:text-white">{batchDuplicateData.name || (batchDuplicateData as Invoice).client}</span>
+            </p>
+            
+            <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 mb-6 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-2 block uppercase">Quick Presets</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button onClick={() => {
+                    const dates: string[] = [];
+                    for (let i = 1; i <= 3; i++) {
+                      const d = new Date();
+                      d.setMonth(d.getMonth() + i);
+                      dates.push(d.toISOString().split('T')[0]);
+                    }
+                    executeBatchDuplicate(dates);
+                  }} className="py-2 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors">
+                    3 Months
+                  </button>
+                  <button onClick={() => {
+                    const dates: string[] = [];
+                    for (let i = 1; i <= 6; i++) {
+                      const d = new Date();
+                      d.setMonth(d.getMonth() + i);
+                      dates.push(d.toISOString().split('T')[0]);
+                    }
+                    executeBatchDuplicate(dates);
+                  }} className="py-2 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors">
+                    6 Months
+                  </button>
+                  <button onClick={() => {
+                    const dates: string[] = [];
+                    for (let i = 1; i <= 12; i++) {
+                      const d = new Date();
+                      d.setMonth(d.getMonth() + i);
+                      dates.push(d.toISOString().split('T')[0]);
+                    }
+                    executeBatchDuplicate(dates);
+                  }} className="py-2 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors">
+                    12 Months
+                  </button>
+                </div>
+              </div>
+              
+              <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                💡 Each copy will be created for the first day of each month starting next month
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => {
+                  setShowBatchDuplicateModal(false);
+                  setBatchDuplicateData(null);
+                }} 
+                className="flex-1 py-3 font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Phase 3: Recurring Transaction Modal */}
+      {showRecurringModal && recurringData && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl p-6 shadow-2xl border border-emerald-500/20">
+            <div className="flex items-center gap-4 mb-4 text-emerald-600 dark:text-emerald-400">
+              <div className="bg-emerald-100 dark:bg-emerald-500/10 p-3 rounded-full">
+                <Calendar size={24} strokeWidth={2} />
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold">Setup Recurring</h3>
+            </div>
+            
+            <p className="text-slate-600 dark:text-slate-300 mb-4 font-medium">
+              Schedule: <span className="font-bold text-slate-900 dark:text-white">{recurringData.name}</span>
+            </p>
+            
+            <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 mb-6 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-2 block uppercase">Frequency</label>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <button onClick={() => setupRecurringTransaction('weekly', 12)} className="py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+                    <div className="text-sm">Weekly</div>
+                    <div className="text-xs text-slate-500 mt-1">Next 12 weeks</div>
+                  </button>
+                  <button onClick={() => setupRecurringTransaction('biweekly', 12)} className="py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+                    <div className="text-sm">Bi-weekly</div>
+                    <div className="text-xs text-slate-500 mt-1">Next 24 weeks</div>
+                  </button>
+                  <button onClick={() => setupRecurringTransaction('monthly', 12)} className="py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+                    <div className="text-sm">Monthly</div>
+                    <div className="text-xs text-slate-500 mt-1">Next 12 months</div>
+                  </button>
+                  <button onClick={() => setupRecurringTransaction('quarterly', 8)} className="py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+                    <div className="text-sm">Quarterly</div>
+                    <div className="text-xs text-slate-500 mt-1">Next 2 years</div>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                💡 All entries will be created immediately. Review them in your ledger.
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => {
+                  setShowRecurringModal(false);
+                  setRecurringData(null);
+                }} 
+                className="flex-1 py-3 font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                Cancel
               </button>
             </div>
           </div>
