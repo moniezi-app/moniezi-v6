@@ -288,21 +288,21 @@ export default function InsightsDashboard({
 
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-slate-950">
-      {/* Compact Fixed Header */}
-      <div className="flex-shrink-0 relative px-5 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+      {/* Modern Clean Header */}
+      <div className="flex-shrink-0 relative px-5 py-5 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
         {/* Action Buttons */}
-        <div className="absolute top-4 right-5 flex items-center gap-6 z-10">
+        <div className="absolute top-5 right-5 flex items-center gap-2 z-10">
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-colors disabled:opacity-50"
+            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all disabled:opacity-50"
             title="Refresh"
           >
             <RefreshCcw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
           </button>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-colors"
+            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all"
             title="Close"
           >
             <X className="w-4 h-4" />
@@ -311,37 +311,37 @@ export default function InsightsDashboard({
 
         {/* Title */}
         <div className="pr-24">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm">
-              <BrainCircuit className="w-5 h-5" strokeWidth={1.2} />
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2.5 rounded-2xl bg-purple-100 dark:bg-purple-900/30">
+              <BrainCircuit className="w-6 h-6 text-purple-600 dark:text-purple-400" strokeWidth={2} />
             </div>
             <div>
-              <h2 className="text-xl font-bold uppercase tracking-wide">SMART INSIGHTS</h2>
-              <p className="text-xs text-white/80">{stats.active} active insights</p>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Smart Insights</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{stats.active} active insights</p>
             </div>
           </div>
         </div>
 
-        {/* Quick Stats Pills */}
-        <div className="flex flex-wrap items-center gap-2 mt-3">
+        {/* Quick Stats Pills - Modern Flat Design */}
+        <div className="flex flex-wrap items-center gap-2">
           {stats.high > 0 && (
-            <div className="px-3 py-1 rounded-full bg-red-500/90 backdrop-blur-sm text-white text-xs font-bold">
+            <div className="px-3.5 py-1.5 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-bold border border-red-200 dark:border-red-800/50">
               {stats.high} High
             </div>
           )}
           {stats.medium > 0 && (
-            <div className="px-3 py-1 rounded-full bg-amber-500/90 backdrop-blur-sm text-white text-xs font-bold">
+            <div className="px-3.5 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-bold border border-amber-200 dark:border-amber-800/50">
               {stats.medium} Medium
             </div>
           )}
           {stats.actionable > 0 && (
-            <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-bold">
+            <div className="px-3.5 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-bold border border-purple-200 dark:border-purple-800/50">
               {stats.actionable} Need Action
             </div>
           )}
           <button
             onClick={resetDismissed}
-            className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white text-xs font-bold transition-colors"
+            className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors border border-slate-200 dark:border-slate-800"
           >
             Reset Dismissed
           </button>
