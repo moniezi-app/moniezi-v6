@@ -2037,30 +2037,6 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
              </div>
 
              <PeriodSelector period={filterPeriod} setPeriod={setFilterPeriod} refDate={referenceDate} setRefDate={setReferenceDate} />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setInvoiceQuickFilter('all')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${invoiceQuickFilter === 'all' ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800'}`}
-              >
-                All ({invoiceQuickCounts.all})
-              </button>
-              <button
-                type="button"
-                onClick={() => setInvoiceQuickFilter('unpaid')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${invoiceQuickFilter === 'unpaid' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800'}`}
-              >
-                Unpaid ({invoiceQuickCounts.unpaid})
-              </button>
-              <button
-                type="button"
-                onClick={() => setInvoiceQuickFilter('overdue')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${invoiceQuickFilter === 'overdue' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800'}`}
-              >
-                Overdue ({invoiceQuickCounts.overdue})
-              </button>
-            </div>
-
 
         {((currentPage === Page.AllTransactions || currentPage === Page.Ledger) || currentPage === Page.Ledger) && (
                <div className="flex bg-slate-200 dark:bg-slate-900 p-1 rounded-lg mb-4">
