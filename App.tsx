@@ -450,9 +450,64 @@ const PeriodSelector: React.FC<{
 
 // --- App Root ---
 
+// --- Safety net: prevent “blank screen” by catching render errors in any page.
+class PageErrorBoundary extends React.Component<
+  { onReset?: () => void; children: React.ReactNode },
+  { hasError: boolean; message?: string }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(err: any) {
+    return { hasError: true, message: String(err?.message || err) };
+  }
+  componentDidCatch(err: any) {
+    // eslint-disable-next-line no-console
+    console.error('[Moniezi] Page render error:', err);
+  }
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <div className="mx-auto max-w-md p-6">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-900 shadow-sm">
+          <div className="text-sm font-semibold">Something broke on this screen.</div>
+          <div className="mt-2 text-xs opacity-80">{this.state.message}</div>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false, message: undefined });
+              this.props.onReset?.();
+            }}
+            className="mt-3 w-full rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white"
+          >
+            Go back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+}
+
+function normalizePage(p: any): Page {
+  // Accept legacy strings from older builds (or stale SW cache)
+  const v = String(p ?? '');
+  const map: Record<string, Page> = {
+    home: Page.Dashboard,
+    dashboard: Page.Dashboard,
+    invoices: Page.Invoices,
+    invoice: Page.Invoices,
+    ledger: Page.Ledger,
+    transactions: Page.AllTransactions,
+    all_transactions: Page.AllTransactions,
+    reports: Page.Reports,
+  };
+  return map[v] ?? (Object.values(Page).includes(v as any) ? (v as Page) : Page.Dashboard);
+}
+
 export default function App() {
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [currentPage, setCurrentPage] = useState<Page>(Page.Dashboard);
+  const [currentPage, _setCurrentPage] = useState<Page>(Page.Dashboard);
+  const setCurrentPage = (p: any) => _setCurrentPage(normalizePage(p));
   const [invoiceQuickFilter, setInvoiceQuickFilter] = useState<'all' | 'unpaid' | 'overdue'>('all');
 
   const HOME_KPI_PERIOD_KEY = 'moniezi_home_kpi_period';
@@ -1801,7 +1856,9 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
         </div>
       </header>
 
-      <main key={currentPage} ref={mainScrollRef} className="flex-1 overflow-y-auto pb-44 px-6 md:px-8 no-print custom-scrollbar">
+      <main ref={mainScrollRef} className="flex-1 overflow-y-auto pb-44 px-6 md:px-8 no-print custom-scrollbar">
+
+      <PageErrorBoundary key={currentPage} onReset={() => setCurrentPage(Page.Dashboard)}>
 
         {(currentPage === Page.Dashboard) && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -3172,7 +3229,9 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
           </div>
         )}
 
-        </main>
+      </PageErrorBoundary>
+
+      </main>
 
       <div className="no-print fixed bottom-3 left-1/2 -translate-x-1/2 w-[94%] max-w-2xl z-[55]">
         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl text-slate-900 dark:text-white rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 flex justify-between items-center relative">

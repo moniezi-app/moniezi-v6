@@ -5,7 +5,8 @@
 */
 // IMPORTANT: bump this when you deploy a new version, otherwise old cached index.html
 // can reference old hashed JS assets and the app will look "broken" (blank/old UI).
-const CACHE_VERSION = "moniezi-pwa-v5";
+// IMPORTANT: bump this whenever you deploy a new build to avoid stale cached assets.
+const CACHE_VERSION = "moniezi-pwa-v6-2026-01-16";
 const CACHE_NAME = `moniezi-cache-${CACHE_VERSION}`;
 
 // Resolve an asset relative to the service worker scope (works on GitHub Pages subpaths)
