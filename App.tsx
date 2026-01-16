@@ -1078,8 +1078,8 @@ export default function App() {
   const getHeaderFabType = (): 'income' | 'expense' | 'billing' => {
     if (currentPage === Page.Income) return 'income';
     if (currentPage === Page.Expenses) return 'expense';
-    if (currentPage === Page.Invoices) return 'billing';
-    if (currentPage === Page.AllTransactions) {
+    if ((currentPage === Page.Invoices || currentPage === Page.Invoice) || currentPage === Page.Invoice) return 'billing';
+    if ((currentPage === Page.AllTransactions || currentPage === Page.Ledger) || currentPage === Page.Ledger) {
       if (ledgerFilter === 'income') return 'income';
       if (ledgerFilter === 'invoice') return 'billing';
       if (ledgerFilter === 'expense') return 'expense';
@@ -1803,7 +1803,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
       <main key={currentPage} ref={mainScrollRef} className="flex-1 overflow-y-auto pb-44 px-6 md:px-8 no-print custom-scrollbar">
 
-        {currentPage === Page.Dashboard && (
+        {(currentPage === Page.Dashboard) && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-white dark:bg-gradient-to-br dark:from-blue-800 dark:to-indigo-950 p-8 rounded-xl shadow-xl dark:shadow-none border border-slate-200 dark:border-white/10 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-80 h-80 bg-slate-100/50 dark:bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-slate-200/50 transition-colors duration-700 pointer-events-none" />
@@ -1965,7 +1965,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
           </div>
         )}
 
-        {(currentPage === Page.Income || currentPage === Page.Expenses || currentPage === Page.AllTransactions) && (
+        {(currentPage === Page.Income || currentPage === Page.Expenses || (currentPage === Page.AllTransactions || currentPage === Page.Ledger)) && (
            <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
              <div className="flex items-center justify-between mb-2 pl-2">
                  <div className="flex items-center gap-3">
@@ -1974,7 +1974,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                        <h2 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white font-brand">{currentPage === Page.Income ? 'Income' : currentPage === Page.Expenses ? 'Expenses' : 'Ledger'}</h2>
                      </div>
                  </div>
-                 {(currentPage === Page.Income || currentPage === Page.Expenses || currentPage === Page.AllTransactions) && (
+                 {(currentPage === Page.Income || currentPage === Page.Expenses || (currentPage === Page.AllTransactions || currentPage === Page.Ledger)) && (
                     <button onClick={() => handleOpenFAB(getHeaderFabType())} className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-500 transition-all"><Plus size={24} strokeWidth={2.5} /></button>
                  )}
              </div>
@@ -2005,7 +2005,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
             </div>
 
 
-             {currentPage === Page.AllTransactions && (
+        {((currentPage === Page.AllTransactions || currentPage === Page.Ledger) || currentPage === Page.Ledger) && (
                <div className="flex bg-slate-200 dark:bg-slate-900 p-1 rounded-lg mb-4">
                   {(['all', 'income', 'expense', 'invoice'] as const).map(f => (
                     <button key={f} onClick={() => setLedgerFilter(f)} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${ledgerFilter === f ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-200'}`}>{f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}</button>
@@ -2021,10 +2021,10 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
              )}
 
              <div className="space-y-4">
-               {(currentPage === Page.AllTransactions ? ledgerItems : filteredTransactions.filter(t => currentPage === Page.Income ? t.type === 'income' : t.type === 'expense')).length === 0 ? (
+               {((currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? ledgerItems : filteredTransactions.filter(t => currentPage === Page.Income ? t.type === 'income' : t.type === 'expense')).length === 0 ? (
                   <EmptyState icon={currentPage === Page.Income ? <Wallet size={32} /> : currentPage === Page.Expenses ? <Receipt size={32} /> : <History size={32} />} title="No Items Found" subtitle="No activity found for the selected period." action={() => handleOpenFAB('income')} actionLabel="Add Transaction" />
                ) : (
-                (currentPage === Page.AllTransactions ? ledgerItems : filteredTransactions.filter(t => currentPage === Page.Income ? t.type === 'income' : t.type === 'expense').sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())).map((item: any) => {
+                ((currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? ledgerItems : filteredTransactions.filter(t => currentPage === Page.Income ? t.type === 'income' : t.type === 'expense').sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())).map((item: any) => {
                   const isInvoice = item.dataType === 'invoice';
                   const isIncome = item.type === 'income';
                   const amountColor = isInvoice ? 'text-blue-600 dark:text-blue-400' : isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
@@ -2053,7 +2053,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
            </div>
         )}
 
-        {currentPage === Page.Invoices && (
+        {((currentPage === Page.Invoices || currentPage === Page.Invoice) || currentPage === Page.Invoice) && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -3074,14 +3074,112 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
             </div>
           </div>
         )}
-      </main>
+        {/* Fallback: never allow navigation to render a blank screen */}
+        {!([
+          Page.Dashboard,
+          Page.Invoices,
+          Page.Invoice,
+          Page.AllTransactions,
+          Page.Ledger,
+          Page.Income,
+          Page.Expenses,
+          Page.Reports,
+          Page.Settings,
+          Page.InvoiceDoc,
+        ] as Page[]).includes(currentPage) && (
+          <div className="p-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm font-semibold text-slate-900">Navigation issue</div>
+              <div className="mt-1 text-sm text-slate-600">
+                We couldn’t open that screen. Tap one of the buttons below to continue.
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => setCurrentPage(Page.Dashboard)}
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Home
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Page.Invoices)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900"
+                >
+                  Invoices
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Page.AllTransactions)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900"
+                >
+                  Ledger
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Page.Reports)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900"
+                >
+                  Reports
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Safety net: never allow navigation to render a blank screen */}
+        {!([
+          Page.Dashboard,
+          Page.Invoices,
+          Page.Invoice,
+          Page.AllTransactions,
+          Page.Ledger,
+          Page.Income,
+          Page.Expenses,
+          Page.Reports,
+          Page.Settings,
+          Page.InvoiceDoc,
+        ] as const).includes(currentPage) && (
+          <div className="px-4 sm:px-6 pt-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="text-sm font-semibold text-slate-900">Navigation error</div>
+              <div className="mt-1 text-sm text-slate-600">
+                We couldn&apos;t load this screen. Tap a tab below to continue.
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => setCurrentPage(Page.Dashboard)}
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Home
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Page.Invoices)}
+                  className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900"
+                >
+                  Invoices
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Page.AllTransactions)}
+                  className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900"
+                >
+                  Ledger
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Page.Reports)}
+                  className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900"
+                >
+                  Reports
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        </main>
 
       <div className="no-print fixed bottom-3 left-1/2 -translate-x-1/2 w-[94%] max-w-2xl z-[55]">
         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl text-slate-900 dark:text-white rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 flex justify-between items-center relative">
             <button onClick={() => setCurrentPage(Page.Dashboard)} className={`flex-1 flex flex-col items-center justify-center py-2 rounded-xl transition-all active:scale-95 ${currentPage === Page.Dashboard ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}><LayoutGrid size={22} strokeWidth={currentPage === Page.Dashboard ? 2.5 : 2} /><span className="text-xs font-bold mt-1">Home</span></button>
-            <button onClick={() => setCurrentPage(Page.Invoices)} className={`flex-1 flex flex-col items-center justify-center py-2 rounded-xl transition-all active:scale-95 ${currentPage === Page.Invoices ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}><FileText size={22} strokeWidth={currentPage === Page.Invoices ? 2.5 : 2} /><span className="text-xs font-bold mt-1">Invoice</span></button>
-            <div className="mx-2 -mt-8"><button onClick={() => handleOpenFAB(currentPage === Page.Invoices ? 'billing' : 'income')} className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-blue-600/40 transition-transform active:scale-95 border-[4px] border-slatebg dark:border-slate-950"><Plus size={32} strokeWidth={3} /></button></div>
-            <button onClick={() => setCurrentPage(Page.AllTransactions)} className={`flex-1 flex flex-col items-center justify-center py-2 rounded-xl transition-all active:scale-95 ${currentPage === Page.AllTransactions ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}><History size={22} strokeWidth={currentPage === Page.AllTransactions ? 2.5 : 2} /><span className="text-xs font-bold mt-1">Ledger</span></button>
+            <button onClick={() => setCurrentPage(Page.Invoices)} className={`flex-1 flex flex-col items-center justify-center py-2 rounded-xl transition-all active:scale-95 ${(currentPage === Page.Invoices || currentPage === Page.Invoice) ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}><FileText size={22} strokeWidth={(currentPage === Page.Invoices || currentPage === Page.Invoice) ? 2.5 : 2} /><span className="text-xs font-bold mt-1">Invoice</span></button>
+            <div className="mx-2 -mt-8"><button onClick={() => handleOpenFAB((currentPage === Page.Invoices || currentPage === Page.Invoice) ? 'billing' : 'income')} className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-blue-600/40 transition-transform active:scale-95 border-[4px] border-slatebg dark:border-slate-950"><Plus size={32} strokeWidth={3} /></button></div>
+            <button onClick={() => setCurrentPage(Page.AllTransactions)} className={`flex-1 flex flex-col items-center justify-center py-2 rounded-xl transition-all active:scale-95 ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}><History size={22} strokeWidth={(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 2.5 : 2} /><span className="text-xs font-bold mt-1">Ledger</span></button>
             <button onClick={() => setCurrentPage(Page.Reports)} className={`flex-1 flex flex-col items-center justify-center py-2 rounded-xl transition-all active:scale-95 ${currentPage === Page.Reports ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}><BarChart3 size={22} strokeWidth={currentPage === Page.Reports ? 2.5 : 2} /><span className="text-xs font-bold mt-1">Reports</span></button>
         </div>
       </div>

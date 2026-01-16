@@ -119,9 +119,13 @@ export type FilterPeriod = 'all' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export enum Page {
   Dashboard = 'dashboard',
+  /** Back-compat: some older UI elements refer to the Ledger page by name. */
+  Ledger = 'ledger',
   AllTransactions = 'all_transactions',
   Income = 'income',
   Expenses = 'expenses',
+  /** Back-compat: singular invoice page name used in older builds. */
+  Invoice = 'invoice',
   Invoices = 'invoices',
   Reports = 'reports',
   Settings = 'settings',
