@@ -2973,7 +2973,46 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-md"><div className="flex items-center gap-2 mb-4 text-emerald-600"><Shield size={20} /><span className="font-bold uppercase tracking-widest text-xs">Tax Shield</span></div><div className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">{formatCurrency.format(reportData.taxShield)}</div><p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">Your expenses have lowered your estimated tax bill by this amount. Every valid business expense saves you money at tax time.</p></div>
-                 <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-md"><div className="flex items-center gap-2 mb-4 text-blue-600"><BookOpen size={20} /><span className="font-bold uppercase tracking-widest text-xs">2025 Standard Deduction</span></div><div className="flex justify-between items-end mb-2"><div className="text-3xl font-extrabold text-slate-900 dark:text-white">{formatCurrency.format(reportData.stdDeduction)}</div><span className="text-xs font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded capitalize text-slate-600 dark:text-slate-300">{settings.filingStatus}</span></div><p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">Compare your personal itemized deductions against this standard amount. This affects your personal income tax, not SE tax.</p></div>
+                 
+                 <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-md">
+                   <div className="flex items-center gap-2 mb-4 text-blue-600">
+                     <BookOpen size={20} />
+                     <span className="font-bold uppercase tracking-widest text-xs">2026 Standard Deduction</span>
+                   </div>
+                   
+                   {/* Filing Status Dropdown */}
+                   <div className="mb-4">
+                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 block uppercase tracking-wide">Filing Status</label>
+                     <select
+                       value={settings.filingStatus}
+                       onChange={(e) => {
+                         const newStatus = e.target.value as FilingStatus;
+                         setSettings(prev => ({ ...prev, filingStatus: newStatus }));
+                       }}
+                       className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                     >
+                       <option value="single">Single</option>
+                       <option value="joint">Married Filing Jointly</option>
+                       <option value="separate">Married Filing Separately</option>
+                       <option value="head">Head of Household</option>
+                     </select>
+                   </div>
+                   
+                   {/* Deduction Amount */}
+                   <div className="mb-3">
+                     <div className="text-3xl font-extrabold text-slate-900 dark:text-white">
+                       {(() => {
+                         if (settings.filingStatus === 'joint') return formatCurrency.format(TAX_PLANNER_2026.STD_DEDUCTION_JOINT);
+                         if (settings.filingStatus === 'head') return formatCurrency.format(TAX_PLANNER_2026.STD_DEDUCTION_HEAD);
+                         return formatCurrency.format(TAX_PLANNER_2026.STD_DEDUCTION_SINGLE);
+                       })()}
+                     </div>
+                   </div>
+                   
+                   <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                     Compare your personal itemized deductions against this standard amount. This affects your personal income tax, not SE tax.
+                   </p>
+                 </div>
               </div>
            </div>
         )}
