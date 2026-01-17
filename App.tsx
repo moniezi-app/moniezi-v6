@@ -3775,8 +3775,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
       
       {/* Phase 3: Batch Duplicate Modal */}
       {showBatchDuplicateModal && batchDuplicateData && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl p-6 shadow-2xl border border-purple-500/20">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl p-6 shadow-2xl border border-purple-500/20 my-auto">
             <div className="flex items-center gap-4 mb-4 text-purple-600 dark:text-purple-400">
               <div className="bg-purple-100 dark:bg-purple-500/10 p-3 rounded-full">
                 <Repeat size={24} strokeWidth={2} />
@@ -3850,8 +3850,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
       
       {/* Phase 3: Recurring Transaction Modal */}
       {showRecurringModal && recurringData && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl p-6 shadow-2xl border border-emerald-500/20">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl p-6 shadow-2xl border border-emerald-500/20 my-auto">
             <div className="flex items-center gap-4 mb-4 text-emerald-600 dark:text-emerald-400">
               <div className="bg-emerald-100 dark:bg-emerald-500/10 p-3 rounded-full">
                 <Calendar size={24} strokeWidth={2} />
