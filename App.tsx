@@ -2298,6 +2298,56 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     );
                   }
                   
+                  // If it's an invoice, use the detailed invoice card layout
+                  if (isInvoice) {
+                    const inv = item as Invoice;
+                    const isVoid = inv.status === 'void';
+                    const overdueDays = inv.status === 'unpaid' ? getDaysOverdue(inv.due) : 0;
+                    const isOverdue = overdueDays > 0;
+                    const isRecurring = inv.recurrence && inv.recurrence.active;
+                    
+                    return (
+                      <div key={item.listId || item.id} className={`bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 hover:shadow-lg transition-all shadow-md cursor-pointer ${isOverdue && !isVoid ? 'border-l-4 border-l-red-500' : ''} ${isVoid ? 'opacity-75 grayscale-[0.5] border-l-4 border-l-slate-400' : ''}`} onClick={() => handleEditItem(item)}>
+                        {/* Top Section: Icon, Name, Description */}
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className={`w-12 h-12 bg-slate-100 dark:bg-blue-500/10 text-slate-600 dark:text-blue-400 rounded-md flex items-center justify-center flex-shrink-0 ${isVoid ? 'bg-slate-200 dark:bg-slate-800 text-slate-400' : ''}`}>{isVoid ? <Ban size={20} strokeWidth={1.5} /> : isRecurring ? <Repeat size={20} strokeWidth={1.5} className="text-blue-500" /> : <FileText size={20} strokeWidth={1.5} />}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className={`font-bold text-slate-900 dark:text-white text-lg ${isVoid ? 'line-through text-slate-400' : ''}`}>{inv.client}</div>
+                              {isRecurring && <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Recurring</span>}
+                            </div>
+                            <div className="text-sm font-medium text-slate-600 dark:text-slate-300">{inv.description}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{inv.date}</div>
+                          </div>
+                        </div>
+                        
+                        {/* Bottom Section: Amount, Status, Actions */}
+                        <div className="flex items-end justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                          <div>
+                              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1 uppercase tracking-wide">Total</label>
+                              <div className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white mb-2">{formatCurrency.format(inv.amount)}</div>
+                              <div className="flex flex-col gap-1">
+                                <div className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 w-fit ${isVoid ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400' : inv.status === 'paid' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300' : isOverdue ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'}`}>
+                                  {isOverdue && !isVoid && <AlertTriangle size={12} />}
+                                  {isVoid ? 'Void' : inv.status === 'paid' ? 'Paid' : isOverdue ? `Overdue (${overdueDays}d)` : 'Unpaid'}
+                                </div>
+                                <div className={`text-xs font-medium ${isOverdue && !isVoid ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                                  {isOverdue && !isVoid ? `Due was ${inv.due}` : `Due ${inv.due}`}
+                                  {isRecurring && inv.recurrence && <span className="block text-blue-500 mt-0.5">Next: {inv.recurrence.nextDate}</span>}
+                                </div>
+                              </div>
+                          </div>
+                          <div className="flex gap-2">
+                              <button onClick={(e) => { e.stopPropagation(); handlePrintInvoice(inv); }} title="Export PDF" className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition-all active:scale-95"><Download size={20} strokeWidth={1.5} /></button>
+                              <button onClick={(e) => { e.stopPropagation(); markInvoicePaid(inv); }} title={inv.status === 'paid' ? "Mark Unpaid" : "Mark Paid"} disabled={isVoid} className={`p-2.5 rounded-lg transition-all active:scale-95 ${isVoid ? 'bg-slate-50 dark:bg-slate-900 text-slate-300 cursor-not-allowed' : inv.status === 'paid' ? 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400 hover:bg-green-600 hover:text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-green-600 hover:text-white'}`}><CheckCircle size={20} strokeWidth={1.5} /></button>
+                              {!isVoid && <button onClick={(e) => { e.stopPropagation(); setActiveItem(inv); setDrawerMode('edit_inv'); setIsDrawerOpen(true); }} title="Edit Invoice" className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-900 hover:text-white dark:hover:bg-slate-700 transition-all active:scale-95"><Edit3 size={20} strokeWidth={1.5} /></button>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  // Otherwise use the standard transaction layout
                   return (
                    <div key={item.listId || item.id} className="p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 hover:shadow-lg transition-all shadow-md" onClick={() => handleEditItem(item)}>
                       {/* Top Row: Icon, Name/Client, Amount */}
