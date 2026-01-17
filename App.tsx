@@ -619,6 +619,9 @@ export default function App() {
   const [savedTemplates, setSavedTemplates] = useState<Array<{id: string, name: string, data: Partial<Transaction | Invoice>, type: string}>>([]);
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [duplicationHistory, setDuplicationHistory] = useState<Record<string, {originalId: string, originalDate: string}>>({});
+  
+  // Settings Tab State
+  const [settingsTab, setSettingsTab] = useState<'backup' | 'branding' | 'tax' | 'data'>('backup');
 
   const insightsBadgeCount = useMemo(() => {
     return getInsightCount({ transactions, invoices, taxPayments, settings });
@@ -3212,27 +3215,93 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
         )}
 
         {currentPage === Page.Settings && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-right-4 pb-24">
-            <h2 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white pl-2 font-brand">Settings</h2>
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-lg border border-slate-200 dark:border-slate-800 space-y-6 shadow-xl">
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 pb-24">
+            {/* Settings Header */}
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <Settings size={24} strokeWidth={1.5} />
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white font-brand">Settings</h2>
+            </div>
+            
+            {/* Tab Navigation */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 shadow-sm">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <button
+                  onClick={() => setSettingsTab('backup')}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                    settingsTab === 'backup'
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <Shield size={18} />
+                  <span className="hidden sm:inline">Backup</span>
+                </button>
+                
+                <button
+                  onClick={() => setSettingsTab('branding')}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                    settingsTab === 'branding'
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <Palette size={18} />
+                  <span className="hidden sm:inline">Branding</span>
+                </button>
+                
+                <button
+                  onClick={() => setSettingsTab('tax')}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                    settingsTab === 'tax'
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <Calculator size={18} />
+                  <span className="hidden sm:inline">Tax</span>
+                </button>
+                
+                <button
+                  onClick={() => setSettingsTab('data')}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                    settingsTab === 'data'
+                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <Trash2 size={18} />
+                  <span className="hidden sm:inline">Data</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            <div className="space-y-6">
               
-              {/* Backup & Restore Section */}
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 uppercase tracking-wide font-brand">
-                      <Shield size={16}/> Backup & Restore
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Backup & Restore Tab */}
+              {settingsTab === 'backup' && (
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg animate-in fade-in slide-in-from-bottom-4">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <Shield size={20} strokeWidth={2} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Backup & Restore</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                       <button 
                           onClick={handleExportBackup} 
-                          className="flex items-center justify-center gap-3 py-4 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-bold text-sm uppercase tracking-wider active:scale-95"
+                          className="flex items-center justify-center gap-3 py-5 rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all font-bold text-sm uppercase tracking-wider active:scale-95"
                       >
-                          <Download size={18} /> Export Backup
+                          <Download size={20} /> Export Backup
                       </button>
                       <button 
                           onClick={() => fileInputRef.current?.click()} 
-                          className="flex items-center justify-center gap-3 py-4 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-bold text-sm uppercase tracking-wider active:scale-95"
+                          className="flex items-center justify-center gap-3 py-5 rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all font-bold text-sm uppercase tracking-wider active:scale-95"
                       >
-                          <Upload size={18} /> Import Backup
+                          <Upload size={20} /> Import Backup
                       </button>
                       <input 
                           type="file" 
@@ -3242,111 +3311,169 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                           accept=".json" 
                       />
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
-                      Save a complete copy of your data to your device. You can restore it later if needed. 
-                      <span className="block mt-1 text-amber-600 dark:text-amber-500 font-medium">Note: Importing overwrites current data.</span>
-                  </p>
-              </div>
-
-              <div className="bg-slate-50 dark:bg-slate-950/50 p-6 rounded-lg border border-slate-100 dark:border-slate-800">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2 uppercase tracking-wide font-brand"><Palette size={16}/> Branding & Customization</h4>
-                  <div className="mb-8">
-                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3 block pl-1">Business Logo</label>
-                      <div className="flex items-start gap-6">
-                          <div className="w-24 h-24 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex items-center justify-center overflow-hidden relative group">
-                              {settings.businessLogo ? (<><img src={settings.businessLogo} alt="Logo" className="w-full h-full object-contain p-2" /><div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><button onClick={() => setSettings(s => ({ ...s, businessLogo: undefined }))} className="text-white bg-red-500 p-1.5 rounded-full hover:bg-red-600"><Trash2 size={14} /></button></div></>) : <ImageIcon className="text-slate-300 dark:text-slate-600" size={32} />}
-                          </div>
-                          <div className="flex-1"><input type="file" ref={logoInputRef} className="hidden" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload} /><button onClick={() => logoInputRef.current?.click()} className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors mb-2"><Upload size={14} /> Upload Logo</button><p className="text-[10px] text-slate-500 dark:text-slate-400">Recommended: PNG with transparent background. Max 2MB.</p></div>
+                  
+                  <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-amber-900 dark:text-amber-100">
+                        <p className="font-semibold mb-1">Important Information</p>
+                        <p>Save a complete copy of your data to your device. You can restore it later if needed.</p>
+                        <p className="mt-2 text-amber-700 dark:text-amber-300 font-bold">⚠️ Warning: Importing a backup will overwrite all current data.</p>
                       </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-4">
-                          <div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700 dark:text-slate-300">Show Logo on Invoice</span><button onClick={() => setSettings(s => ({ ...s, showLogoOnInvoice: !s.showLogoOnInvoice }))} className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.showLogoOnInvoice ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${settings.showLogoOnInvoice ? 'translate-x-6' : 'translate-x-0'}`} /></button></div>
-                          <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-2 block">Logo Alignment</label><div className="flex bg-slate-200 dark:bg-slate-900 p-1 rounded-lg"><button onClick={() => setSettings(s => ({ ...s, logoAlignment: 'left' }))} className={`flex-1 py-1.5 flex items-center justify-center gap-2 rounded-md transition-all ${settings.logoAlignment === 'left' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}><AlignLeft size={16} /> <span className="text-[10px] font-bold uppercase">Left</span></button><button onClick={() => setSettings(s => ({ ...s, logoAlignment: 'center' }))} className={`flex-1 py-1.5 flex items-center justify-center gap-2 rounded-md transition-all ${settings.logoAlignment === 'center' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}><AlignCenter size={16} /> <span className="text-[10px] font-bold uppercase">Center</span></button></div></div>
-                      </div>
-                      <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3 block">Brand Accent Color</label><div className="flex flex-wrap gap-3">{['#2563eb', '#4f46e5', '#9333ea', '#059669', '#dc2626', '#0f172a'].map(color => (<button key={color} onClick={() => setSettings(s => ({ ...s, brandColor: color }))} className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 flex items-center justify-center ${settings.brandColor === color ? 'ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-900 ring-slate-400' : ''}`} style={{ backgroundColor: color }}>{settings.brandColor === color && <CheckCircle size={14} className="text-white" strokeWidth={3} />}</button>))}</div><p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">Used for invoice headings and highlights.</p></div>
-                  </div>
-              </div>
+                </div>
+              )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3 block pl-1 font-brand">Business Name</label><input type="text" value={settings.businessName} onChange={e => setSettings(s => ({ ...s, businessName: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-0 rounded-lg px-5 py-4 font-bold text-lg text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-inner" /></div>
-                  <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3 block pl-1 font-brand">Owner Name</label><input type="text" value={settings.ownerName} onChange={e => setSettings(s => ({ ...s, ownerName: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-0 rounded-lg px-5 py-4 font-bold text-lg text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-inner" /></div>
-              </div>
+              {/* Branding & Customization Tab */}
+              {settingsTab === 'branding' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                  <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                        <Palette size={20} strokeWidth={2} />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">Branding & Customization</h3>
+                    </div>
+                    
+                    <div className="mb-8">
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3 block">Business Logo</label>
+                        <div className="flex items-start gap-6">
+                            <div className="w-24 h-24 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex items-center justify-center overflow-hidden relative group">
+                                {settings.businessLogo ? (<><img src={settings.businessLogo} alt="Logo" className="w-full h-full object-contain p-2" /><div className="absolute inset-0 bg-black/50 flex items-center justify-center transition-opacity"><button onClick={() => setSettings(s => ({ ...s, businessLogo: undefined }))} className="text-white bg-red-500 p-1.5 rounded-full hover:bg-red-600"><Trash2 size={14} /></button></div></>) : <ImageIcon className="text-slate-300 dark:text-slate-600" size={32} />}
+                            </div>
+                            <div className="flex-1"><input type="file" ref={logoInputRef} className="hidden" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload} /><button onClick={() => logoInputRef.current?.click()} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors mb-2"><Upload size={14} /> Upload Logo</button><p className="text-xs text-slate-500 dark:text-slate-400">Recommended: PNG with transparent background. Max 2MB.</p></div>
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700 dark:text-slate-300">Show Logo on Invoice</span><button onClick={() => setSettings(s => ({ ...s, showLogoOnInvoice: !s.showLogoOnInvoice }))} className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.showLogoOnInvoice ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${settings.showLogoOnInvoice ? 'translate-x-6' : 'translate-x-0'}`} /></button></div>
+                            <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-2 block">Logo Alignment</label><div className="flex bg-slate-200 dark:bg-slate-900 p-1 rounded-lg"><button onClick={() => setSettings(s => ({ ...s, logoAlignment: 'left' }))} className={`flex-1 py-1.5 flex items-center justify-center gap-2 rounded-md transition-all ${settings.logoAlignment === 'left' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}><AlignLeft size={16} /> <span className="text-[10px] font-bold uppercase">Left</span></button><button onClick={() => setSettings(s => ({ ...s, logoAlignment: 'center' }))} className={`flex-1 py-1.5 flex items-center justify-center gap-2 rounded-md transition-all ${settings.logoAlignment === 'center' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}><AlignCenter size={16} /> <span className="text-[10px] font-bold uppercase">Center</span></button></div></div>
+                        </div>
+                        <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3 block">Brand Accent Color</label><div className="flex flex-wrap gap-3">{['#2563eb', '#4f46e5', '#9333ea', '#059669', '#dc2626', '#0f172a'].map(color => (<button key={color} onClick={() => setSettings(s => ({ ...s, brandColor: color }))} className={`w-10 h-10 rounded-lg shadow-sm transition-transform hover:scale-110 flex items-center justify-center ${settings.brandColor === color ? 'ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-900 ring-slate-400' : ''}`} style={{ backgroundColor: color }}>{settings.brandColor === color && <CheckCircle size={16} className="text-white" strokeWidth={3} />}</button>))}</div><p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Used for invoice headings and highlights.</p></div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3 block">Business Name</label><input type="text" value={settings.businessName} onChange={e => setSettings(s => ({ ...s, businessName: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-5 py-4 font-bold text-lg text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500/20 transition-all" /></div>
+                        <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3 block">Owner Name</label><input type="text" value={settings.ownerName} onChange={e => setSettings(s => ({ ...s, ownerName: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-5 py-4 font-bold text-lg text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500/20 transition-all" /></div>
+                    </div>
 
-              <div className="border border-slate-100 dark:border-slate-800 rounded-lg p-5 bg-slate-50/50 dark:bg-slate-900/50">
-                  <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-4">Invoice Contact Details</h4>
-                  <div className="space-y-4">
-                      <div><label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-1 block">Address</label><input type="text" value={settings.businessAddress || ''} onChange={e => setSettings(s => ({ ...s, businessAddress: e.target.value }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-blue-500" placeholder="123 Main St, City, State, Zip" /></div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div><label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-1 block">Email</label><input type="email" value={settings.businessEmail || ''} onChange={e => setSettings(s => ({ ...s, businessEmail: e.target.value }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-blue-500" placeholder="contact@business.com" /></div>
-                          <div><label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-1 block">Phone</label><input type="tel" value={settings.businessPhone || ''} onChange={e => setSettings(s => ({ ...s, businessPhone: e.target.value }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-blue-500" placeholder="(555) 123-4567" /></div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div><label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-1 block">Website</label><input type="text" value={settings.businessWebsite || ''} onChange={e => setSettings(s => ({ ...s, businessWebsite: e.target.value }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-blue-500" placeholder="www.yourbusiness.com" /></div>
-                          <div><label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-1 block">Tax ID / VAT (Optional)</label><input type="text" value={settings.businessTaxId || ''} onChange={e => setSettings(s => ({ ...s, businessTaxId: e.target.value }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-blue-500" placeholder="XX-XXXXXXX" /></div>
-                      </div>
+                    <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-6 bg-slate-50/50 dark:bg-slate-900/50">
+                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-4">Invoice Contact Details</h4>
+                        <div className="space-y-4">
+                            <div><label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-1 block">Address</label><input type="text" value={settings.businessAddress || ''} onChange={e => setSettings(s => ({ ...s, businessAddress: e.target.value }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-purple-500" placeholder="123 Main St, City, State, Zip" /></div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div><label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-1 block">Email</label><input type="email" value={settings.businessEmail || ''} onChange={e => setSettings(s => ({ ...s, businessEmail: e.target.value }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-purple-500" placeholder="contact@business.com" /></div>
+                                <div><label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-1 block">Phone</label><input type="tel" value={settings.businessPhone || ''} onChange={e => setSettings(s => ({ ...s, businessPhone: e.target.value }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-purple-500" placeholder="(555) 123-4567" /></div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div><label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-1 block">Website</label><input type="text" value={settings.businessWebsite || ''} onChange={e => setSettings(s => ({ ...s, businessWebsite: e.target.value }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-purple-500" placeholder="www.yourbusiness.com" /></div>
+                                <div><label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-1 block">Tax ID / VAT (Optional)</label><input type="text" value={settings.businessTaxId || ''} onChange={e => setSettings(s => ({ ...s, businessTaxId: e.target.value }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-purple-500" placeholder="XX-XXXXXXX" /></div>
+                            </div>
+                        </div>
+                    </div>
                   </div>
-              </div>
+                </div>
+              )}
               
-              <div className="bg-slate-50 dark:bg-slate-950/50 p-6 rounded-lg border border-slate-100 dark:border-slate-800">
-                 <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2 uppercase tracking-wide font-brand"><Calculator size={16}/> Tax Configuration</h4>
-                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3 block pl-1 font-brand">How do you want to estimate your income tax?</label>
+              {/* Tax Configuration Tab */}
+              {settingsTab === 'tax' && (
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg animate-in fade-in slide-in-from-bottom-4">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <Calculator size={20} strokeWidth={2} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Tax Configuration</h3>
+                  </div>
+                  
+                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3 block">How do you want to estimate your income tax?</label>
                  <div className="flex bg-slate-200 dark:bg-slate-900 p-1 rounded-lg mb-6">
                     {(['preset', 'lastYear', 'custom'] as TaxEstimationMethod[]).map(method => (
-                      <button key={method} onClick={() => setSettings(s => ({ ...s, taxEstimationMethod: method }))} className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${settings.taxEstimationMethod === method ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-200'}`}>{method === 'preset' ? 'Quick Preset' : method === 'lastYear' ? 'Use Last Year' : 'Custom %'}</button>
+                      <button key={method} onClick={() => setSettings(s => ({ ...s, taxEstimationMethod: method }))} className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${settings.taxEstimationMethod === method ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-200'}`}>{method === 'preset' ? 'Quick Preset' : method === 'lastYear' ? 'Use Last Year' : 'Custom %'}</button>
                     ))}
                  </div>
-                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 mb-6 shadow-sm">
+                 
+                 <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-6 mb-6">
                     {settings.taxEstimationMethod === 'preset' && (
                        <div className="space-y-4 animate-in fade-in zoom-in-95">
-                          <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Select a rough estimate based on typical self-employed brackets. This is for planning only.</p>
-                          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                          <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">Select a rough estimate based on typical self-employed brackets. This is for planning only.</p>
+                          <div className="grid grid-cols-3 gap-3">
                              {[10, 15, 20].map(rate => (
-                               <button key={rate} onClick={() => setSettings(s => ({ ...s, taxRate: rate }))} className={`py-3 sm:py-4 rounded-lg border-2 transition-all flex flex-col items-center justify-center ${settings.taxRate === rate ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'border-slate-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700'}`}><span className="text-xl sm:text-2xl font-extrabold">{rate}%</span></button>
+                               <button key={rate} onClick={() => setSettings(s => ({ ...s, taxRate: rate }))} className={`py-6 rounded-lg border-2 transition-all flex flex-col items-center justify-center ${settings.taxRate === rate ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 shadow-lg' : 'border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700'}`}><span className="text-3xl font-extrabold">{rate}%</span><span className="text-xs mt-1 font-medium">Federal</span></button>
                              ))}
                           </div>
                        </div>
                     )}
                     {settings.taxEstimationMethod === 'lastYear' && (
                        <div className="space-y-4 animate-in fade-in zoom-in-95">
-                          <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Enter values from last year's tax return to calculate your effective rate.</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">Enter values from last year's tax return to calculate your effective rate.</p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                             <div><label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-300 mb-1 block">Net Profit (Last Year)</label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 font-bold">$</span><input type="number" placeholder="0.00" value={lastYearCalc.profit} onChange={e => setLastYearCalc(p => ({...p, profit: e.target.value}))} className="w-full pl-7 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"/></div></div>
-                             <div><label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-300 mb-1 block">Fed. Income Tax Paid</label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 font-bold">$</span><input type="number" placeholder="0.00" value={lastYearCalc.tax} onChange={e => setLastYearCalc(p => ({...p, tax: e.target.value}))} className="w-full pl-7 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"/></div></div>
+                             <div><label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-300 mb-2 block">Net Profit (Last Year)</label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 font-bold">$</span><input type="number" placeholder="0.00" value={lastYearCalc.profit} onChange={e => setLastYearCalc(p => ({...p, profit: e.target.value}))} className="w-full pl-8 pr-3 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/20"/></div></div>
+                             <div><label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-300 mb-2 block">Fed. Income Tax Paid</label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 font-bold">$</span><input type="number" placeholder="0.00" value={lastYearCalc.tax} onChange={e => setLastYearCalc(p => ({...p, tax: e.target.value}))} className="w-full pl-8 pr-3 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/20"/></div></div>
                           </div>
-                          <button onClick={() => { const profit = Number(lastYearCalc.profit); const tax = Number(lastYearCalc.tax); if (profit > 0 && tax >= 0) { const rate = Math.min(40, Math.max(0, (tax / profit) * 100)); setSettings(s => ({ ...s, taxRate: Number(rate.toFixed(1)) })); showToast(`Rate set to ${rate.toFixed(1)}%`, 'success'); } else { showToast("Please enter valid profit amount", "error"); } }} className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-sm uppercase tracking-widest rounded hover:opacity-90 transition-opacity">Calculate & Apply Rate</button>
+                          <button onClick={() => { const profit = Number(lastYearCalc.profit); const tax = Number(lastYearCalc.tax); if (profit > 0 && tax >= 0) { const rate = Math.min(40, Math.max(0, (tax / profit) * 100)); setSettings(s => ({ ...s, taxRate: Number(rate.toFixed(1)) })); showToast(`Rate set to ${rate.toFixed(1)}%`, 'success'); } else { showToast("Please enter valid profit amount", "error"); } }} className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm uppercase tracking-widest rounded-lg transition-all active:scale-95">Calculate & Apply Rate</button>
                        </div>
                     )}
                     {settings.taxEstimationMethod === 'custom' && (
                        <div className="space-y-4 animate-in fade-in zoom-in-95">
-                          <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Manually enter your estimated effective federal income tax rate.</p>
-                          <div><label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-300 mb-1 block">Federal Effective Rate</label><div className="relative"><input type="number" value={settings.taxRate} onChange={e => setSettings(s => ({ ...s, taxRate: Math.min(100, Math.max(0, Number(e.target.value))) }))} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-3 font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"/><span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 font-bold"><Percent size={16} /></span></div></div>
+                          <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">Manually enter your estimated effective federal income tax rate.</p>
+                          <div><label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-300 mb-2 block">Federal Effective Rate</label><div className="relative"><input type="number" value={settings.taxRate} onChange={e => setSettings(s => ({ ...s, taxRate: Math.min(100, Math.max(0, Number(e.target.value))) }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-3 pr-12 font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"/><span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 font-bold"><Percent size={18} /></span></div></div>
                        </div>
                     )}
                  </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-2 block pl-1 font-brand">State Tax (Optional)</label><div className="relative"><input type="number" value={settings.stateTaxRate} onChange={e => setSettings(s => ({ ...s, stateTaxRate: Math.min(100, Math.max(0, Number(e.target.value))) }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"/><span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 font-bold">%</span></div></div>
-                    <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-2 block pl-1 font-brand">Filing Status</label><select value={settings.filingStatus} onChange={e => setSettings(s => ({ ...s, filingStatus: e.target.value as FilingStatus }))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"><option value="single">Single</option><option value="joint">Married Filing Jointly</option><option value="head">Head of Household</option></select></div>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-2 block">State Tax (Optional)</label><div className="relative"><input type="number" value={settings.stateTaxRate} onChange={e => setSettings(s => ({ ...s, stateTaxRate: Math.min(100, Math.max(0, Number(e.target.value))) }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-3 pr-10 font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"/><span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 font-bold">%</span></div></div>
+                    <div><label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-2 block">Filing Status</label><select value={settings.filingStatus} onChange={e => setSettings(s => ({ ...s, filingStatus: e.target.value as FilingStatus }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-3 font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all appearance-none"><option value="single">Single</option><option value="joint">Married Filing Jointly</option><option value="head">Head of Household</option></select></div>
                  </div>
-                 <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
-                    <h5 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-4 font-brand">Current Estimate Settings</h5>
-                    <div className="flex flex-col gap-2 text-sm">
-                       <div className="flex justify-between"><span className="text-slate-600 dark:text-slate-300">Federal Income Tax (Effective)</span><span className="font-bold text-slate-900 dark:text-white">{settings.taxRate}%</span></div>
-                       <div className="flex justify-between"><span className="text-slate-600 dark:text-slate-300">State Tax (Optional)</span><span className="font-bold text-slate-900 dark:text-white">{settings.stateTaxRate}%</span></div>
-                       <div className="flex justify-between"><span className="text-slate-600 dark:text-slate-300 flex items-center gap-1">Self-Employment Tax <HelpCircle size={12} className="text-slate-500 dark:text-slate-300 cursor-help" title="Social Security (12.4%) + Medicare (2.9%)" /></span><span className="font-bold text-slate-900 dark:text-white">~15.3%</span></div>
-                       <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
-                       <div className="flex justify-between items-center text-blue-600 dark:text-blue-400"><span className="font-bold uppercase text-xs tracking-wider">Combined Planning Rate</span><span className="font-extrabold text-lg">{(settings.taxRate + settings.stateTaxRate + 15.3).toFixed(1)}%</span></div>
+                 
+                 <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 rounded-lg p-6">
+                    <h5 className="text-sm font-bold text-emerald-900 dark:text-emerald-100 mb-4 uppercase tracking-wider">Current Estimate Summary</h5>
+                    <div className="flex flex-col gap-3 text-sm">
+                       <div className="flex justify-between items-center"><span className="text-emerald-700 dark:text-emerald-300">Federal Income Tax (Effective)</span><span className="font-bold text-emerald-900 dark:text-emerald-100 text-lg">{settings.taxRate}%</span></div>
+                       <div className="flex justify-between items-center"><span className="text-emerald-700 dark:text-emerald-300">State Tax (Optional)</span><span className="font-bold text-emerald-900 dark:text-emerald-100 text-lg">{settings.stateTaxRate}%</span></div>
+                       <div className="flex justify-between items-center"><span className="text-emerald-700 dark:text-emerald-300 flex items-center gap-1">Self-Employment Tax <HelpCircle size={14} className="cursor-help" title="Social Security (12.4%) + Medicare (2.9%)" /></span><span className="font-bold text-emerald-900 dark:text-emerald-100 text-lg">~15.3%</span></div>
+                       <div className="h-px bg-emerald-200 dark:bg-emerald-800 my-1" />
+                       <div className="flex justify-between items-center bg-emerald-100 dark:bg-emerald-900/20 -mx-2 px-2 py-2 rounded"><span className="font-bold uppercase text-xs tracking-wider text-emerald-900 dark:text-emerald-100">Combined Planning Rate</span><span className="font-extrabold text-2xl text-emerald-900 dark:text-emerald-100">{(settings.taxRate + settings.stateTaxRate + 15.3).toFixed(1)}%</span></div>
                     </div>
                  </div>
-              </div>
-
-              <div className="bg-blue-600/5 dark:bg-indigo-500/10 p-8 rounded-lg border border-blue-200 dark:border-indigo-500/20">
-                <h4 className="text-base font-bold text-blue-800 dark:text-indigo-300 mb-4 uppercase tracking-widest font-brand">Data Management</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button onClick={handleSeedDemoData} className="w-full bg-white dark:bg-slate-900 hover:bg-slate-950 hover:text-white text-slate-900 dark:text-indigo-400 py-5 rounded-lg text-sm font-bold uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-800 active:scale-95">{seedSuccess ? <CheckCircle size={20} /> : <Sparkles size={20} />}{seedSuccess ? 'Done' : 'Load Demo Data'}</button>
-                    <button onClick={handleClearData} className="w-full bg-white dark:bg-slate-900 hover:bg-red-50 hover:text-red-600 text-slate-900 dark:text-red-400 py-5 rounded-lg text-sm font-bold uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-800 active:scale-95"><Trash2 size={20} />Reset & Clear</button>
                 </div>
-              </div>
+              )}
+
+              {/* Data Management Tab */}
+              {settingsTab === 'data' && (
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg animate-in fade-in slide-in-from-bottom-4">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center">
+                      <Trash2 size={20} strokeWidth={2} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Data Management</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                      <button onClick={handleSeedDemoData} className="py-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 border-2 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100 rounded-lg text-sm font-bold uppercase tracking-widest shadow-lg transition-all flex flex-col items-center justify-center gap-3 active:scale-95">
+                        {seedSuccess ? <CheckCircle size={24} /> : <Sparkles size={24} />}
+                        <span>{seedSuccess ? 'Demo Data Loaded' : 'Load Demo Data'}</span>
+                      </button>
+                      <button onClick={handleClearData} className="py-6 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 hover:from-red-100 hover:to-orange-100 dark:hover:from-red-900/30 dark:hover:to-orange-900/30 border-2 border-red-200 dark:border-red-800 text-red-900 dark:text-red-100 rounded-lg text-sm font-bold uppercase tracking-widest shadow-lg transition-all flex flex-col items-center justify-center gap-3 active:scale-95">
+                        <AlertTriangle size={24} />
+                        <span>Reset & Clear All</span>
+                      </button>
+                  </div>
+                  
+                  <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-red-900 dark:text-red-100">
+                        <p className="font-semibold mb-1">⚠️ Warning: Destructive Actions</p>
+                        <p className="mb-2"><strong>Load Demo Data:</strong> Adds sample transactions, invoices, and tax payments to help you explore the app's features.</p>
+                        <p><strong>Reset & Clear All:</strong> Permanently deletes ALL your data including transactions, invoices, tax payments, and custom categories. This action cannot be undone!</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
