@@ -3229,50 +3229,50 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 <button
                   onClick={() => setSettingsTab('backup')}
-                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                  className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-3 md:px-4 py-3 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wide transition-all ${
                     settingsTab === 'backup'
                       ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                       : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
                   <Shield size={18} />
-                  <span className="hidden sm:inline">Backup</span>
+                  <span className="text-[10px] md:text-sm mt-0.5 md:mt-0">Backup</span>
                 </button>
                 
                 <button
                   onClick={() => setSettingsTab('branding')}
-                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                  className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-3 md:px-4 py-3 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wide transition-all ${
                     settingsTab === 'branding'
                       ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                       : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
                   <Palette size={18} />
-                  <span className="hidden sm:inline">Branding</span>
+                  <span className="text-[10px] md:text-sm mt-0.5 md:mt-0">Branding</span>
                 </button>
                 
                 <button
                   onClick={() => setSettingsTab('tax')}
-                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                  className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-3 md:px-4 py-3 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wide transition-all ${
                     settingsTab === 'tax'
                       ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
                       : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
                   <Calculator size={18} />
-                  <span className="hidden sm:inline">Tax</span>
+                  <span className="text-[10px] md:text-sm mt-0.5 md:mt-0">Tax</span>
                 </button>
                 
                 <button
                   onClick={() => setSettingsTab('data')}
-                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                  className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-3 md:px-4 py-3 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wide transition-all ${
                     settingsTab === 'data'
                       ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
                       : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
                   <Trash2 size={18} />
-                  <span className="hidden sm:inline">Data</span>
+                  <span className="text-[10px] md:text-sm mt-0.5 md:mt-0">Data</span>
                 </button>
               </div>
             </div>
