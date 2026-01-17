@@ -2266,23 +2266,27 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   const iconBg = isInvoice ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' : isIncome ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400';
                   const Icon = isInvoice ? FileText : isIncome ? Wallet : Receipt;
                   return (
-                   <div key={item.listId || item.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 hover:shadow-lg transition-all shadow-md" onClick={() => handleEditItem(item)}>
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}><Icon size={22} strokeWidth={1.5} /></div>
-                          <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2"><div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">{item.name || item.client}</div>{isInvoice && (<span className={`text-xs font-bold px-2 py-1 rounded uppercase ${item.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{item.status}</span>)}</div>
-                              <div className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 mt-0.5 truncate">{item.date} · {item.category}</div>
+                   <div key={item.listId || item.id} className="p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 hover:shadow-lg transition-all shadow-md" onClick={() => handleEditItem(item)}>
+                      {/* Top Row: Icon, Name/Client, Amount */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}><Icon size={22} strokeWidth={1.5} /></div>
+                              <div className="min-w-0 flex-1 pt-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                      <div className="font-bold text-slate-900 dark:text-white text-base leading-tight">{item.name || item.client}</div>
+                                      {isInvoice && (<span className={`text-xs font-bold px-2 py-0.5 rounded uppercase flex-shrink-0 ${item.status === 'paid' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>{item.status}</span>)}
+                                  </div>
+                                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{item.date} · {item.category}</div>
+                              </div>
                           </div>
+                          <div className={`text-xl font-bold whitespace-nowrap flex-shrink-0 pt-1 ${amountColor}`}>{isIncome ? '+' : ''}{formatCurrency.format(item.amount)}</div>
                       </div>
-                      <div className="flex items-center gap-3 sm:gap-4 ml-4 flex-shrink-0">
-                          <div className="text-right">
-                              <div className={`text-lg sm:text-xl font-bold whitespace-nowrap ${amountColor}`}>{isIncome ? '+' : ''}{formatCurrency.format(item.amount)}</div>
-                          </div>
-                          <div className="flex items-center gap-1 sm:gap-2">
-                               <button onClick={(e) => { e.stopPropagation(); if (isInvoice) duplicateInvoice(item as Invoice); else duplicateTransaction(item as Transaction); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95" title="Duplicate"><Copy size={18}/></button>
-                               <button onClick={(e) => { e.stopPropagation(); handleEditItem(item); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95" title="Edit"><Edit3 size={18}/></button>
-                               <button onClick={(e) => { e.stopPropagation(); if (isInvoice) deleteInvoice(item); else deleteTransaction(item.id); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95" title="Delete"><Trash2 size={18}/></button>
-                          </div>
+                      
+                      {/* Bottom Row: Action Buttons */}
+                      <div className="flex items-center justify-end gap-1 pt-2 border-t border-slate-100 dark:border-slate-800">
+                           <button onClick={(e) => { e.stopPropagation(); if (isInvoice) duplicateInvoice(item as Invoice); else duplicateTransaction(item as Transaction); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95" title="Duplicate"><Copy size={18}/></button>
+                           <button onClick={(e) => { e.stopPropagation(); handleEditItem(item); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95" title="Edit"><Edit3 size={18}/></button>
+                           <button onClick={(e) => { e.stopPropagation(); if (isInvoice) deleteInvoice(item); else deleteTransaction(item.id); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95" title="Delete"><Trash2 size={18}/></button>
                       </div>
                    </div>
                   );
