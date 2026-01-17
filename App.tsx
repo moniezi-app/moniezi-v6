@@ -2263,20 +2263,22 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   const iconBg = isInvoice ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' : isIncome ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400';
                   const Icon = isInvoice ? FileText : isIncome ? Wallet : Receipt;
                   return (
-                   <div key={item.listId || item.id} className="flex items-center justify-between p-6 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 hover:shadow-lg transition-all shadow-md cursor-pointer group" onClick={() => handleEditItem(item)}>
-                      <div className="flex items-center gap-5 flex-1 min-w-0">
+                   <div key={item.listId || item.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 hover:shadow-lg transition-all shadow-md" onClick={() => handleEditItem(item)}>
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}><Icon size={22} strokeWidth={1.5} /></div>
-                          <div className="min-w-0">
-                              <div className="flex items-center gap-2"><div className="text-lg font-bold text-slate-900 dark:text-white truncate">{item.name || item.client}</div>{isInvoice && (<span className={`text-xs font-bold px-2 py-1 rounded uppercase ${item.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{item.status}</span>)}</div>
-                              <div className="text-sm font-medium text-slate-600 dark:text-slate-300 mt-0.5 truncate">{item.date} · {item.category}</div>
+                          <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2"><div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">{item.name || item.client}</div>{isInvoice && (<span className={`text-xs font-bold px-2 py-1 rounded uppercase ${item.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{item.status}</span>)}</div>
+                              <div className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 mt-0.5 truncate">{item.date} · {item.category}</div>
                           </div>
                       </div>
-                      <div className="text-right ml-4 flex-shrink-0 w-[130px]">
-                          <div className={`text-xl font-bold whitespace-nowrap ${amountColor}`}>{isIncome ? '+' : ''}{formatCurrency.format(item.amount)}</div>
-                          <div className="flex justify-end gap-3 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                               <button onClick={(e) => { e.stopPropagation(); if (isInvoice) duplicateInvoice(item as Invoice); else duplicateTransaction(item as Transaction); }} className="text-slate-400 dark:text-slate-300 hover:text-blue-600 transition-colors" title="Duplicate"><Copy size={18}/></button>
-                               <button onClick={(e) => { e.stopPropagation(); handleEditItem(item); }} className="text-slate-400 dark:text-slate-300 hover:text-slate-600 transition-colors" title="Edit"><Edit3 size={18}/></button>
-                               <button onClick={(e) => { e.stopPropagation(); if (isInvoice) deleteInvoice(item); else deleteTransaction(item.id); }} className="text-slate-400 dark:text-slate-300 hover:text-red-600 transition-colors" title="Delete"><Trash2 size={18}/></button>
+                      <div className="flex items-center gap-3 sm:gap-4 ml-4 flex-shrink-0">
+                          <div className="text-right">
+                              <div className={`text-lg sm:text-xl font-bold whitespace-nowrap ${amountColor}`}>{isIncome ? '+' : ''}{formatCurrency.format(item.amount)}</div>
+                          </div>
+                          <div className="flex items-center gap-1 sm:gap-2">
+                               <button onClick={(e) => { e.stopPropagation(); if (isInvoice) duplicateInvoice(item as Invoice); else duplicateTransaction(item as Transaction); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95" title="Duplicate"><Copy size={18}/></button>
+                               <button onClick={(e) => { e.stopPropagation(); handleEditItem(item); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95" title="Edit"><Edit3 size={18}/></button>
+                               <button onClick={(e) => { e.stopPropagation(); if (isInvoice) deleteInvoice(item); else deleteTransaction(item.id); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95" title="Delete"><Trash2 size={18}/></button>
                           </div>
                       </div>
                    </div>
@@ -2354,10 +2356,10 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                           <div className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white">{formatCurrency.format(inv.amount)}</div>
                           <div className={`text-sm font-bold mt-1 ${isOverdue && !isVoid ? 'text-red-500' : 'text-slate-600 dark:text-slate-300'}`}>{isOverdue && !isVoid ? `Due was ${inv.due}` : `Due ${inv.due}`}{isRecurring && inv.recurrence && <span className="block text-xs text-blue-500 mt-0.5 font-normal">Next: {inv.recurrence.nextDate}</span>}</div>
                       </div>
-                      <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
-                          <button onClick={(e) => { e.stopPropagation(); handlePrintInvoice(inv); }} title="Export PDF" className="p-3 rounded-md bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-200 hover:bg-blue-600 hover:text-white transition-all"><Download size={22} strokeWidth={1.5} /></button>
-                          <button onClick={(e) => { e.stopPropagation(); markInvoicePaid(inv); }} title={inv.status === 'paid' ? "Mark Unpaid" : "Mark Paid"} disabled={isVoid} className={`p-3 rounded-md transition-all ${isVoid ? 'bg-slate-50 dark:bg-slate-900 text-slate-300 cursor-not-allowed' : inv.status === 'paid' ? 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200 hover:bg-green-600 hover:text-white'}`}><CheckCircle size={22} strokeWidth={1.5} /></button>
-                          {!isVoid && <button onClick={(e) => { e.stopPropagation(); setActiveItem(inv); setDrawerMode('edit_inv'); setIsDrawerOpen(true); }} title="Edit Invoice" className="p-3 rounded-md bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-200 hover:bg-slate-950 hover:text-white transition-all"><Edit3 size={22} strokeWidth={1.5} /></button>}
+                      <div className="flex gap-2">
+                          <button onClick={(e) => { e.stopPropagation(); handlePrintInvoice(inv); }} title="Export PDF" className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition-all active:scale-95"><Download size={20} strokeWidth={1.5} /></button>
+                          <button onClick={(e) => { e.stopPropagation(); markInvoicePaid(inv); }} title={inv.status === 'paid' ? "Mark Unpaid" : "Mark Paid"} disabled={isVoid} className={`p-2.5 rounded-lg transition-all active:scale-95 ${isVoid ? 'bg-slate-50 dark:bg-slate-900 text-slate-300 cursor-not-allowed' : inv.status === 'paid' ? 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400 hover:bg-green-600 hover:text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-green-600 hover:text-white'}`}><CheckCircle size={20} strokeWidth={1.5} /></button>
+                          {!isVoid && <button onClick={(e) => { e.stopPropagation(); setActiveItem(inv); setDrawerMode('edit_inv'); setIsDrawerOpen(true); }} title="Edit Invoice" className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-900 hover:text-white dark:hover:bg-slate-700 transition-all active:scale-95"><Edit3 size={20} strokeWidth={1.5} /></button>}
                       </div>
                     </div>
                   </div>
