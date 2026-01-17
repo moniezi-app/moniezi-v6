@@ -2265,6 +2265,39 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   const amountColor = isInvoice ? 'text-blue-600 dark:text-blue-400' : isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
                   const iconBg = isInvoice ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' : isIncome ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400';
                   const Icon = isInvoice ? FileText : isIncome ? Wallet : Receipt;
+                  
+                  // Invoice status calculations
+                  let invoiceStatusBadge = null;
+                  if (isInvoice) {
+                    const inv = item as Invoice;
+                    const isVoid = inv.status === 'void';
+                    const overdueDays = inv.status === 'unpaid' ? getDaysOverdue(inv.due) : 0;
+                    const isOverdue = overdueDays > 0;
+                    
+                    let badgeClass = '';
+                    let badgeText = '';
+                    
+                    if (isVoid) {
+                      badgeClass = 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
+                      badgeText = 'VOID';
+                    } else if (inv.status === 'paid') {
+                      badgeClass = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+                      badgeText = 'PAID';
+                    } else if (isOverdue) {
+                      badgeClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+                      badgeText = 'OVERDUE';
+                    } else {
+                      badgeClass = 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
+                      badgeText = 'UNPAID';
+                    }
+                    
+                    invoiceStatusBadge = (
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase flex-shrink-0 ${badgeClass}`}>
+                        {badgeText}
+                      </span>
+                    );
+                  }
+                  
                   return (
                    <div key={item.listId || item.id} className="p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 hover:shadow-lg transition-all shadow-md" onClick={() => handleEditItem(item)}>
                       {/* Top Row: Icon, Name/Client, Amount */}
@@ -2274,7 +2307,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                               <div className="min-w-0 flex-1 pt-1">
                                   <div className="flex items-center gap-2 mb-1">
                                       <div className="font-bold text-slate-900 dark:text-white text-base leading-tight">{item.name || item.client}</div>
-                                      {isInvoice && (<span className={`text-xs font-bold px-2 py-0.5 rounded uppercase flex-shrink-0 ${item.status === 'paid' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>{item.status}</span>)}
+                                      {invoiceStatusBadge}
                                   </div>
                                   <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{item.date} · {item.category}</div>
                               </div>
